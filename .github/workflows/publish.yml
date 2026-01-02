@@ -22,5 +22,5 @@ jobs:
         env:
           VITE_BUILD_ID: ${{ github.sha }}
 
-      - run: cd ./core && yarn npm publish --access public
-      - run: cd ./nestjs && yarn npm publish --access public
+      - run: cd ./core && yarn npm publish --provenance --access public
+      - run: cd ./nestjs && yarn npm publish --provenance --access public
