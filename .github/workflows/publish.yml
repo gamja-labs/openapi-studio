@@ -1,0 +1,26 @@
+name: Node.js Package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: yarn install --immutable
+      - run: yarn ci
+        env:
+          VITE_BUILD_ID: ${{ github.sha }}
+
+      - run: cd ./core && yarn npm publish --access public
+      - run: cd ./nestjs && yarn npm publish --access public

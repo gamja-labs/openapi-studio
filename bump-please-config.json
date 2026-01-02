@@ -1,0 +1,10 @@
+{
+    "packages": [
+        {
+            "path": "./core"
+        },
+        {
+            "path": "./nestjs"
+        }
+    ]
+}

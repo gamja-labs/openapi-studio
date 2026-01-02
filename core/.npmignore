@@ -1,0 +1,10 @@
+.env*
+
+*.md
+
+vite.config.ts
+tsconfig*
+src/
+public/
+env.d.ts
+index.html
