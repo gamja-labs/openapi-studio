@@ -8,3 +8,4 @@ src/
 public/
 env.d.ts
 index.html
+!dist/index.html
