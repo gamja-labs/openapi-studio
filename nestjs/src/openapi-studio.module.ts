@@ -74,7 +74,6 @@ export class OpenApiStudioModule {
         options?: OpenApiStudioOptions
     ) {
 
-        console.log('options', options);
         const globalPrefix = getGlobalPrefix(app);
         const finalPath = validatePath(
             options?.useGlobalPrefix !== false && validateGlobalPrefix(globalPrefix)
@@ -90,7 +89,6 @@ export class OpenApiStudioModule {
             ? `${validatedGlobalPrefix}${validatePath(options.jsonDocumentUrl)}`
             : `${validatedGlobalPrefix}/openapi.json`;
 
-        console.log('jsonDocumentUrl', jsonDocumentUrl);
 
         const configJsonPath = options?.configJsonPath
             ? `${validatedGlobalPrefix}${validatePath(options.configJsonPath)}`
