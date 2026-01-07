@@ -3360,10 +3360,9 @@ const clearCurrentEndpointHistory = () => {
 
     .json-editor-wrapper {
         border: 1px solid hsl(var(--border));
-        max-height: 300px;
-        min-height: 100px;
+        max-height: 60vh;
         background: hsl(var(--input));
-        overflow: hidden;
+        overflow: auto;
     }
 }
 
@@ -3489,7 +3488,7 @@ const clearCurrentEndpointHistory = () => {
     width: 100%;
     border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
-    overflow: hidden;
+    overflow: auto;
     background: hsl(var(--input));
 
     :deep(.jsoneditor) {

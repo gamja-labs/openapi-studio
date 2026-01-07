@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "yarn workspaces foreach --topological --all --exclude nestjs-test-project run build",
-    "ci": "yarn build"
+    "ci": "yarn build",
+    "dev": "yarn workspace @openapi-studio/core run dev"
   },
   "workspaces": [
     "core",
