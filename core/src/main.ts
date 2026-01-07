@@ -7,7 +7,8 @@ import { dark } from '@clerk/themes'
 import App from './App.vue'
 import { routes } from '@/router'
 import { useClerkStore } from '@/stores/clerk'
-import { loadConfig, getServiceHost } from '@/utils/config'
+import { useConfigStore } from '@/stores/config'
+import { useFeaturesToggle } from '@/composables/useFeaturesToggle'
 
 import '@fontsource-variable/open-sans';
 import '@fontsource-variable/chivo-mono';
@@ -25,24 +26,31 @@ export const createApp = ViteSSG(
         routes,
     },
     async ({ app }) => {
-        // Load config from config.json (path configurable via VITE_CONFIG_JSON_PATH)
-        await loadConfig()
-
         // Set up Pinia
         const pinia = createPinia()
         app.use(pinia)
-
-        // Get Clerk key from store
-        const clerkStore = useClerkStore()
-        const publishableKey = clerkStore.getClerkKey
         
-        if (publishableKey) {
-            app.use(clerkPlugin, {
-                publishableKey: publishableKey,
-                appearance: {
-                    theme: dark,
-                },
-            });
+        // Initialize config store (loads all settings from localStorage)
+        const configStore = useConfigStore()
+        configStore.initialize()
+        await configStore.loadConfig()
+
+        // Check feature toggles
+        const features = useFeaturesToggle()
+        
+        // Only initialize Clerk if not disabled and key is available
+        if (features.isClerkEnabled) {
+            const clerkStore = useClerkStore()
+            const publishableKey = clerkStore.getClerkKey
+            
+            if (publishableKey) {
+                app.use(clerkPlugin, {
+                    publishableKey: publishableKey,
+                    appearance: {
+                        theme: dark,
+                    },
+                });
+            }
         } 
     }
 );

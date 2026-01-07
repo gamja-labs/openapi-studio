@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { OpenAPIV3 } from 'openapi-types'
-import { getOpenApiSpecUrlSync } from '@/utils/config'
+import { useConfigStore } from '@/stores/config'
 
 export const useOpenApiStore = defineStore('openapi', () => {
+    const config = useConfigStore()
+    
     // State
     const openApiSpec = ref<OpenAPIV3.Document | null>(null)
     const loading = ref(true)
@@ -11,7 +13,7 @@ export const useOpenApiStore = defineStore('openapi', () => {
 
     // Computed
     const openApiSpecUrl = computed(() => {
-        return getOpenApiSpecUrlSync()
+        return config.getOpenApiSpecUrlSync()
     })
 
     const endpoints = computed(() => {
@@ -80,6 +82,7 @@ export const useOpenApiStore = defineStore('openapi', () => {
             }
             openApiSpec.value = await response.json()
         } catch (err) {
+            console.log(err)
             error.value = err instanceof Error ? err.message : 'Failed to load OpenAPI spec'
         } finally {
             loading.value = false

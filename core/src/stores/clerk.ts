@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { useLocalStorageStore } from './localStorage'
-import { getClerkKeySync, isClerkKeyFromConfig, isClerkKeyFromEnv } from '@/utils/config'
+import { ref, computed, watch } from 'vue'
+import { useLocalStorage } from '@/composables/useLocalStorage'
+import { useConfigStore } from '@/stores/config'
 
 export type ClerkKeySource = 'localStorage' | 'config.json' | 'env' | null
 
@@ -9,78 +9,58 @@ export const useClerkStore = defineStore('clerk', () => {
     // State
     const clerkKey = ref<string>('')
 
-    // Get localStorage store
-    const localStorageStore = useLocalStorageStore()
+    // Get composables
+    const localStorage = useLocalStorage()
+    const config = useConfigStore()
 
     // Getters
     const hasClerkKey = computed((): boolean => {
-        // Try localStorage first
-        if (!import.meta.env.SSR) {
-            const storedKey = localStorageStore.getClerkKey()
-            if (storedKey && storedKey.trim()) {
-                return true
-            }
-        }
-
-        // Try config.json
-        const configKey = getClerkKeySync()
-        if (configKey && configKey.trim()) {
-            return true
-        }
-
-        // Fallback to environment variable
-        const envKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ?? ''
-        return !!(envKey && envKey.trim())
+        // Get key from config (which checks selected service host, config.json, localStorage, env)
+        const key = config.getClerkKeySync()
+        return !!(key && key.trim())
     })
 
     const getClerkKey = computed((): string => {
-        // Try localStorage first
-        if (!import.meta.env.SSR) {
-            const storedKey = localStorageStore.getClerkKey()
-            if (storedKey && storedKey.trim()) {
-                return storedKey.trim()
-            }
-        }
-
-        // Try config.json
-        const configKey = getClerkKeySync()
-        if (configKey && configKey.trim()) {
-            return configKey.trim()
-        }
-
-        // Fallback to environment variable
-        const envKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-        if (envKey && envKey.trim()) {
-            return envKey.trim()
-        }
-
-        return ''
+        // Get key from config (which checks selected service host, config.json, localStorage, env)
+        return config.getClerkKeySync()
     })
 
     const hasSavedClerkKey = computed((): boolean => {
-        return localStorageStore.hasSavedClerkKey()
+        // Check if selected service host has a clerk key
+        const selectedHost = config.getSelectedServiceHost
+        if (selectedHost?.clerkKey?.trim()) {
+            return true
+        }
+        // Fallback to legacy localStorage check
+        return localStorage.hasSavedClerkKey()
     })
 
     /**
      * Determines the source of the Clerk key
      */
     const clerkKeySource = computed((): ClerkKeySource => {
-        // Check localStorage first
-        if (!import.meta.env.SSR) {
-            const storedKey = localStorageStore.getClerkKey()
-            if (storedKey && storedKey.trim()) {
-                return 'localStorage'
-            }
+        // Check selected service host first
+        const selectedHost = config.getSelectedServiceHost
+        if (selectedHost?.clerkKey?.trim()) {
+            return 'localStorage' // Stored with service host (in localStorage)
         }
 
         // Check config.json
-        if (isClerkKeyFromConfig()) {
+        if (config.isClerkKeyFromConfig()) {
             return 'config.json'
         }
 
         // Check environment variable
-        if (isClerkKeyFromEnv()) {
+        if (config.isClerkKeyFromEnv()) {
             return 'env'
+        }
+
+        // Fallback to legacy localStorage
+        if (!import.meta.env.SSR) {
+            const storedKey = localStorage.getClerkKey()
+            if (storedKey && storedKey.trim()) {
+                return 'localStorage'
+            }
         }
 
         return null
@@ -96,26 +76,31 @@ export const useClerkStore = defineStore('clerk', () => {
 
     // Actions
     function loadClerkKey() {
-        localStorageStore.loadClerkKey()
-        // If localStorage has a key, use it
-        if (localStorageStore.clerkKey && localStorageStore.clerkKey.trim()) {
-            clerkKey.value = localStorageStore.clerkKey
+        // Get the key from selected service host, config.json, localStorage, or env var for display
+        const key = getClerkKey.value
+        if (key) {
+            clerkKey.value = key
         } else {
-            // Otherwise, try to get from config.json or env var for display
-            const key = getClerkKey.value
-            if (key) {
-                clerkKey.value = key
-            } else {
-                clerkKey.value = ''
-            }
+            clerkKey.value = ''
         }
     }
 
     function saveClerkKey() {
-        if (clerkKey.value.trim()) {
-            localStorageStore.saveClerkKey(clerkKey.value)
+        // Save to selected service host if available, otherwise legacy localStorage
+        const selectedHost = config.getSelectedServiceHost
+        if (selectedHost) {
+            if (clerkKey.value.trim()) {
+                config.saveClerkKeyForSelectedHost(clerkKey.value)
+            } else {
+                config.clearClerkKeyForSelectedHost()
+            }
         } else {
-            localStorageStore.clearClerkKey()
+            // Fallback to legacy localStorage
+            if (clerkKey.value.trim()) {
+                localStorage.saveClerkKey(clerkKey.value)
+            } else {
+                localStorage.clearClerkKey()
+            }
         }
         // Refresh the browser to apply the new Clerk key
         if (typeof window !== 'undefined') {
@@ -125,12 +110,23 @@ export const useClerkStore = defineStore('clerk', () => {
 
     function clearClerkKey() {
         clerkKey.value = ''
-        localStorageStore.clearClerkKey()
+        // Clear from selected service host if available, otherwise legacy localStorage
+        const selectedHost = config.getSelectedServiceHost
+        if (selectedHost) {
+            config.clearClerkKeyForSelectedHost()
+        } else {
+            localStorage.clearClerkKey()
+        }
         // Refresh the browser
         if (typeof window !== 'undefined') {
             window.location.reload()
         }
     }
+
+    // Watch for selected service host changes to reload clerk key
+    watch(() => config.getSelectedServiceHost, () => {
+        loadClerkKey()
+    }, { deep: true })
 
     return {
         clerkKey,

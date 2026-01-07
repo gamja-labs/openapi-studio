@@ -91,15 +91,5 @@ const goHome = () => {
         background-color: hsl(var(--primary) / 0.9);
     }
 }
-
-.btn-outline {
-    background-color: transparent;
-    color: hsl(var(--foreground));
-    border-color: hsl(var(--border));
-
-    &:hover {
-        background-color: hsl(var(--muted));
-    }
-}
 </style>
 
