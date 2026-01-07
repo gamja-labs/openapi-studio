@@ -4,6 +4,10 @@ import { ref } from 'vue'
 // Storage keys
 const STORAGE_KEYS = {
     CLERK_KEY: 'clerk-publishable-key',
+    SIDEBAR_COLLAPSED: 'sidebar-collapsed',
+    EXAMPLES_SIDEBAR_COLLAPSED: 'examples-sidebar-collapsed',
+    ENDPOINTS_SIDEBAR_WIDTH: 'endpoints-sidebar-width',
+    EXAMPLES_SIDEBAR_WIDTH: 'examples-sidebar-width',
 } as const
 
 // Generic getter with JSON parsing
@@ -72,6 +76,40 @@ export const useLocalStorageStore = defineStore('localStorage', () => {
         return hasClerkKey()
     }
 
+    // Actions - Sidebar States
+    function loadSidebarCollapsed(): boolean {
+        return getItem<boolean>(STORAGE_KEYS.SIDEBAR_COLLAPSED, false)
+    }
+
+    function saveSidebarCollapsed(collapsed: boolean): void {
+        setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, collapsed)
+    }
+
+    function loadExamplesSidebarCollapsed(): boolean {
+        return getItem<boolean>(STORAGE_KEYS.EXAMPLES_SIDEBAR_COLLAPSED, false)
+    }
+
+    function saveExamplesSidebarCollapsed(collapsed: boolean): void {
+        setItem(STORAGE_KEYS.EXAMPLES_SIDEBAR_COLLAPSED, collapsed)
+    }
+
+    // Actions - Sidebar Widths
+    function loadEndpointsSidebarWidth(): number {
+        return getItem<number>(STORAGE_KEYS.ENDPOINTS_SIDEBAR_WIDTH, 500)
+    }
+
+    function saveEndpointsSidebarWidth(width: number): void {
+        setItem(STORAGE_KEYS.ENDPOINTS_SIDEBAR_WIDTH, width)
+    }
+
+    function loadExamplesSidebarWidth(): number {
+        return getItem<number>(STORAGE_KEYS.EXAMPLES_SIDEBAR_WIDTH, 400)
+    }
+
+    function saveExamplesSidebarWidth(width: number): void {
+        setItem(STORAGE_KEYS.EXAMPLES_SIDEBAR_WIDTH, width)
+    }
+
     // Initialize all data on store creation
     function initialize() {
         loadClerkKey()
@@ -87,6 +125,16 @@ export const useLocalStorageStore = defineStore('localStorage', () => {
         getClerkKey,
         hasClerkKey,
         hasSavedClerkKey,
+        // Sidebar States
+        loadSidebarCollapsed,
+        saveSidebarCollapsed,
+        loadExamplesSidebarCollapsed,
+        saveExamplesSidebarCollapsed,
+        // Sidebar Widths
+        loadEndpointsSidebarWidth,
+        saveEndpointsSidebarWidth,
+        loadExamplesSidebarWidth,
+        saveExamplesSidebarWidth,
         // Initialization
         initialize,
     }

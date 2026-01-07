@@ -76,6 +76,10 @@ const authCredentials = ref<Record<string, any>>({});
 const sidebarCollapsed = ref(false);
 const examplesSidebarCollapsed = ref(false);
 const expandedCurlSections = ref<Set<string>>(new Set());
+const endpointsSidebarWidth = ref(500);
+const examplesSidebarWidth = ref(400);
+const isResizingEndpoints = ref(false);
+const isResizingExamples = ref(false);
 
 type RequestHistoryItem = {
     id: string;
@@ -221,6 +225,14 @@ onMounted(async () => {
     // Load Clerk publishable key from localStorage store
     clerkStore.loadClerkKey();
 
+    // Load sidebar collapsed states from localStorage
+    sidebarCollapsed.value = localStorageStore.loadSidebarCollapsed();
+    examplesSidebarCollapsed.value = localStorageStore.loadExamplesSidebarCollapsed();
+    
+    // Load sidebar widths from localStorage
+    endpointsSidebarWidth.value = localStorageStore.loadEndpointsSidebarWidth();
+    examplesSidebarWidth.value = localStorageStore.loadExamplesSidebarWidth();
+
     await openApiStore.loadSpec();
 
     // Pre-compute all endpoint hashes for synchronous access in template
@@ -251,7 +263,70 @@ onMounted(async () => {
             selectedMethod.value = null;
         }
     });
+
+    // Watch for sidebar state changes and save to localStorage
+    watch(sidebarCollapsed, (newValue) => {
+        localStorageStore.saveSidebarCollapsed(newValue);
+    });
+
+    watch(examplesSidebarCollapsed, (newValue) => {
+        localStorageStore.saveExamplesSidebarCollapsed(newValue);
+    });
+
+    // Watch for sidebar width changes and save to localStorage
+    watch(endpointsSidebarWidth, (newValue) => {
+        localStorageStore.saveEndpointsSidebarWidth(newValue);
+    });
+
+    watch(examplesSidebarWidth, (newValue) => {
+        localStorageStore.saveExamplesSidebarWidth(newValue);
+    });
 });
+
+// Drag handlers for resizing sidebars
+const startResizeEndpoints = (e: MouseEvent) => {
+    isResizingEndpoints.value = true;
+    const startX = e.clientX;
+    const startWidth = endpointsSidebarWidth.value;
+
+    const handleMouseMove = (e: MouseEvent) => {
+        // For left sidebar: dragging right (e.clientX increases) should increase width
+        const diff = e.clientX - startX;
+        const newWidth = Math.max(200, Math.min(800, startWidth + diff));
+        endpointsSidebarWidth.value = newWidth;
+    };
+
+    const handleMouseUp = () => {
+        isResizingEndpoints.value = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+};
+
+const startResizeExamples = (e: MouseEvent) => {
+    isResizingExamples.value = true;
+    const startX = e.clientX;
+    const startWidth = examplesSidebarWidth.value;
+
+    const handleMouseMove = (e: MouseEvent) => {
+        // For right sidebar: dragging left (e.clientX decreases) should increase width
+        const diff = startX - e.clientX;
+        const newWidth = Math.max(200, Math.min(800, startWidth + diff));
+        examplesSidebarWidth.value = newWidth;
+    };
+
+    const handleMouseUp = () => {
+        isResizingExamples.value = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+};
 
 const updateAuthCredential = (schemeName: string, field: string, value: any) => {
     // Update auth credentials in memory
@@ -486,7 +561,9 @@ const sendRequest = async () => {
         // Add body for methods that support it
         if (['POST', 'PUT', 'PATCH'].includes(selectedMethod.value) && requestBody.value.trim()) {
             try {
+                console.log(requestBody.value);
                 options.body = JSON.stringify(JSON.parse(requestBody.value));
+                console.log(options.body);
             } catch (e) {
                 const error = 'Invalid JSON in request body';
                 responseError.value = error;
@@ -602,19 +679,15 @@ const queryParameters = computed(() => {
 
 const requestBodyJson = computed({
     get: () => {
-        if (!requestBody.value.trim()) return {};
+        if (!requestBody.value.trim()) return "{}";
         try {
-            return JSON.parse(requestBody.value);
+            return requestBody.value;
         } catch {
-            return {};
+            return "{}";
         }
     },
-    set: (value: any) => {
-        try {
-            requestBody.value = JSON.stringify(value, null, 2);
-        } catch {
-            // Keep existing value if stringify fails
-        }
+    set: (value: string) => {
+        requestBody.value = value;
     }
 });
 
@@ -1039,7 +1112,11 @@ const clearCurrentEndpointHistory = () => {
         </aside>
 
         <div class="test-container">
-            <aside class="endpoints-sidebar" :class="{ collapsed: sidebarCollapsed }">
+            <aside 
+                class="endpoints-sidebar" 
+                :class="{ collapsed: sidebarCollapsed, resizing: isResizingEndpoints }"
+                :style="{ width: sidebarCollapsed ? '60px' : `${endpointsSidebarWidth}px` }"
+            >
                 <div class="sidebar-header">
                     <h2>Endpoints</h2>
                     <button 
@@ -1089,6 +1166,13 @@ const clearCurrentEndpointHistory = () => {
                     </div>
                 </div>
             </aside>
+
+            <div 
+                v-if="!sidebarCollapsed"
+                class="resize-handle resize-handle-endpoints"
+                @mousedown="startResizeEndpoints"
+                :class="{ resizing: isResizingEndpoints }"
+            ></div>
 
             <div v-if="selectedEndpoint" class="endpoint-content">
                 <main class="endpoint-tester">
@@ -1174,7 +1258,7 @@ const clearCurrentEndpointHistory = () => {
                     <div v-if="selectedEndpoint.requestBody" class="body-section">
                         <h4>Request Body</h4>
                         <div class="json-editor-wrapper">
-                            <JsonEditorVue v-model="requestBodyJson"
+                            <JsonEditorVue v-model:text="requestBodyJson"
                             mode="text"
                             :mainMenuBar="false"
                                     :navigationBar="false"
@@ -1213,6 +1297,8 @@ const clearCurrentEndpointHistory = () => {
                                         {{ item.method }}
                                     </span>
                                     <span class="history-url">{{ item.url }}</span>
+                                </div>
+                                <div class="history-meta-group">
                                     <span v-if="item.authScheme" class="history-auth-scheme">
                                         <Lock :size="12" />
                                         {{ item.authScheme === CLERK_BEARER_SCHEME ? 'Clerk Bearer' : item.authScheme }}
@@ -1224,14 +1310,15 @@ const clearCurrentEndpointHistory = () => {
                                     <span class="history-timestamp">
                                         {{ new Date(item.timestamp).toLocaleTimeString() }}
                                     </span>
-                                </div>
-                                <div v-if="item.status" class="history-status">
-                                    <span class="status-code" :class="{
-                                        success: item.status >= 200 && item.status < 300,
-                                        error: item.status >= 400
-                                    }">
-                                        {{ item.status }} {{ item.statusText }}
-                                    </span>
+                                    <div v-if="item.status" class="history-status">
+                                        <span class="status-code" :class="{
+                                            success: item.status >= 200 && item.status < 300,
+                                            error: item.status >= 400,
+                                            redirect: item.status >= 300 && item.status < 400
+                                        }">
+                                            {{ item.status }} {{ item.statusText }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -1303,8 +1390,19 @@ const clearCurrentEndpointHistory = () => {
                 </footer>
                 </main>
 
+                <div 
+                    v-if="!examplesSidebarCollapsed"
+                    class="resize-handle resize-handle-examples"
+                    @mousedown="startResizeExamples"
+                    :class="{ resizing: isResizingExamples }"
+                ></div>
+
                 <!-- Examples Column -->
-                <aside class="examples-sidebar" :class="{ collapsed: examplesSidebarCollapsed }">
+                <aside 
+                    class="examples-sidebar" 
+                    :class="{ collapsed: examplesSidebarCollapsed, resizing: isResizingExamples }"
+                    :style="{ width: examplesSidebarCollapsed ? '60px' : `${examplesSidebarWidth}px` }"
+                >
                     <div class="examples-header">
                         <h3>Examples</h3>
                         <button 
@@ -2238,8 +2336,6 @@ const clearCurrentEndpointHistory = () => {
 }
 
 .endpoints-sidebar {
-    width: 500px;
-    border-right: 1px solid hsl(var(--border));
     background: hsl(var(--card));
     display: flex;
     flex-direction: column;
@@ -2247,8 +2343,8 @@ const clearCurrentEndpointHistory = () => {
     overflow: hidden;
     transition: width 0.3s ease;
 
-    &.collapsed {
-        width: 60px;
+    &.resizing {
+        transition: none;
     }
 
     .sidebar-header {
@@ -2312,6 +2408,47 @@ const clearCurrentEndpointHistory = () => {
     min-height: 0;
     padding-left: 1rem;
     padding-bottom: 1rem;
+}
+
+.resize-handle {
+    width: 8px;
+    background: hsl(var(--card));
+    cursor: col-resize;
+    flex-shrink: 0;
+    position: relative;
+    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+
+    &::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 8px;
+        top: 0;
+        bottom: 0;
+        // background: hsl(var(--border));
+        cursor: col-resize;
+        transition: background-color 0.2s;
+    }
+
+    &:hover::before {
+        background: hsl(var(--accent));
+    }
+
+    &.resizing::before {
+        background: hsl(var(--accent));
+    }
+}
+
+.resize-handle-endpoints {
+    border-right: 1px solid hsl(var(--border));
+}
+
+.resize-handle-examples {
+    border-left: 1px solid hsl(var(--border));
 }
 
 .loading,
@@ -2503,7 +2640,6 @@ const clearCurrentEndpointHistory = () => {
 }
 
 .examples-sidebar {
-    width: 400px;
     border-right: 1px solid hsl(var(--border));
     background: hsl(var(--card));
     padding: 1.5rem;
@@ -2515,8 +2651,11 @@ const clearCurrentEndpointHistory = () => {
     min-height: 0;
     transition: width 0.3s ease;
 
+    &.resizing {
+        transition: none;
+    }
+
     &.collapsed {
-        width: 60px;
         padding: 1.5rem 0.5rem;
     }
 }
@@ -3214,14 +3353,16 @@ const clearCurrentEndpointHistory = () => {
     margin-bottom: 1rem;
     border-bottom: 1px solid hsl(var(--border));
     padding-bottom: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .history-item-title {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    flex: 1;
-    min-width: 0;
+    flex: 1 1 0;
+    min-width: 200px;
+    flex-wrap: nowrap;
 }
 
 .method-badge.small {
@@ -3230,39 +3371,81 @@ const clearCurrentEndpointHistory = () => {
     width: auto;
     min-width: 3rem;
     max-width: 3rem;
+    flex-shrink: 0;
 }
 
 .history-url {
     font-family: 'Chivo Mono Variable', monospace;
     font-size: 0.8125rem;
     color: hsl(var(--foreground));
-    flex: 1;
-    min-width: 0;
+    flex: 1 1 auto;
+    min-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.history-auth-scheme {
+.history-meta-group {
     display: flex;
+    align-items: center;
+    gap: 0;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    min-width: fit-content;
+
+    @media (max-width: 640px) {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+.history-auth-scheme {
+    display: inline-flex;
     align-items: center;
     gap: 0.375rem;
     font-size: 0.75rem;
     color: hsl(var(--muted-foreground));
     white-space: nowrap;
-    padding: 0.25rem 0.5rem;
-    background: hsl(var(--muted));
-    border-radius: calc(var(--radius) - 2px);
+    flex-shrink: 0;
+    padding-right: 0.75rem;
+
+    @media (max-width: 640px) {
+        padding-right: 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid hsl(var(--border));
+        width: 100%;
+    }
 }
 
 .history-timestamp {
     font-size: 0.75rem;
     color: hsl(var(--muted-foreground));
     white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0 0.75rem;
+    border-left: 1px solid hsl(var(--border));
+
+    @media (max-width: 640px) {
+        padding: 0;
+        padding-bottom: 0.5rem;
+        border-left: none;
+        border-bottom: 1px solid hsl(var(--border));
+        width: 100%;
+    }
 }
 
 .history-status {
     flex-shrink: 0;
+    padding-left: 0.75rem;
+    border-left: 1px solid hsl(var(--border));
+
+    @media (max-width: 640px) {
+        padding-left: 0;
+        border-left: none;
+        width: 100%;
+    }
 }
 
 .history-curl-section {
@@ -3567,15 +3750,38 @@ const clearCurrentEndpointHistory = () => {
 }
 
 .status-code {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: calc(var(--radius) - 2px);
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    flex-shrink: 0;
 
     &.success {
+        background-color: rgba(73, 204, 144, 0.1);
         color: #49cc90;
+        border: 1px solid rgba(73, 204, 144, 0.2);
     }
 
     &.error {
+        background-color: rgba(249, 62, 62, 0.1);
         color: #f93e3e;
+        border: 1px solid rgba(249, 62, 62, 0.2);
+    }
+
+    &.redirect {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+
+    &:not(.success):not(.error):not(.redirect) {
+        background-color: hsl(var(--muted));
+        color: hsl(var(--muted-foreground));
+        border: 1px solid hsl(var(--border));
     }
 }
 
