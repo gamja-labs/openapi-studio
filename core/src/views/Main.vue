@@ -67,6 +67,53 @@ const requestBody = ref<string>('');
 const response = ref<any>(null);
 const responseError = ref<string | null>(null);
 const sendingRequest = ref(false);
+
+// Store form state per endpoint to preserve dirty state when switching
+type EndpointFormState = {
+    requestParams: Record<string, any>;
+    requestBody: string;
+    selectedAuthScheme: string | null;
+};
+
+const endpointFormState = ref<Map<string, EndpointFormState>>(new Map());
+
+const getEndpointKey = (path: string | null, method: string | null): string | null => {
+    if (!path || !method) return null;
+    return `${method}:${path}`;
+};
+
+const saveCurrentEndpointFormState = () => {
+    const key = getEndpointKey(selectedPath.value, selectedMethod.value);
+    if (!key) return;
+    
+    endpointFormState.value.set(key, {
+        requestParams: { ...requestParams.value },
+        requestBody: requestBody.value,
+        selectedAuthScheme: selectedAuthScheme.value,
+    });
+};
+
+const restoreEndpointFormState = (path: string, method: string): boolean => {
+    const key = getEndpointKey(path, method);
+    if (!key) return false;
+    
+    const savedState = endpointFormState.value.get(key);
+    if (!savedState) return false;
+    
+    requestParams.value = { ...savedState.requestParams };
+    requestBody.value = savedState.requestBody;
+    selectedAuthScheme.value = savedState.selectedAuthScheme;
+    return true;
+};
+
+// Watch form values and save state automatically when they change
+watch([requestParams, requestBody, selectedAuthScheme], () => {
+    // Only save if we have a selected endpoint
+    if (selectedPath.value && selectedMethod.value) {
+        saveCurrentEndpointFormState();
+    }
+}, { deep: true });
+
 const expandedGroups = ref<Set<string>>(new Set());
 const expandedSchemaRefs = ref<Set<string>>(new Set());
 const exampleViewMode = ref<Map<string, boolean>>(new Map()); // Track schema/example mode per item
@@ -349,10 +396,11 @@ const clearClerkKey = () => {
 };
 
 const selectEndpoint = async (path: string, method: string, updateHash = true) => {
+    // Save current form state before switching
+    saveCurrentEndpointFormState();
+    
     selectedPath.value = path;
     selectedMethod.value = method;
-    requestParams.value = {};
-    requestBody.value = '';
     response.value = null;
     responseError.value = null;
     // Clear expanded schema refs and view modes when switching endpoints
@@ -378,38 +426,54 @@ const selectEndpoint = async (path: string, method: string, updateHash = true) =
     // Find the endpoint
     const endpoint = endpoints.value.find(e => e.path === path && e.method === method);
 
+    // Try to restore saved form state for this endpoint
+    const hasRestoredState = restoreEndpointFormState(path, method);
+
     // Initialize request params from the endpoint
+    // If we restored state, merge with any new parameters that might have been added
     if (endpoint?.operation.parameters) {
         for (const param of endpoint.operation.parameters) {
             const resolved = openApiStore.resolveParameter(param);
             if (resolved && (resolved.in === 'query' || resolved.in === 'path')) {
-                requestParams.value[resolved.name] = '';
+                // Only initialize if not already in restored state
+                if (!hasRestoredState || !(resolved.name in requestParams.value)) {
+                    requestParams.value[resolved.name] = '';
+                }
             }
         }
+    } else if (!hasRestoredState) {
+        // Clear params if no endpoint params and no restored state
+        requestParams.value = {};
     }
 
     // Initialize request body if needed
     if (endpoint?.operation.requestBody) {
-        let requestBodyObj: OpenAPIV3.RequestBodyObject | OpenAPIV3.ReferenceObject | undefined = endpoint.operation.requestBody;
-        
-        // Handle reference
-        if (requestBodyObj && typeof requestBodyObj === 'object' && '$ref' in requestBodyObj && requestBodyObj.$ref && openApiSpec.value) {
-            const refValue = openApiStore.resolveReference<OpenAPIV3.RequestBodyObject>(requestBodyObj.$ref, openApiSpec.value);
-            if (refValue && typeof refValue === 'object') {
-                requestBodyObj = refValue;
+        // Only initialize if we didn't restore state
+        if (!hasRestoredState) {
+            let requestBodyObj: OpenAPIV3.RequestBodyObject | OpenAPIV3.ReferenceObject | undefined = endpoint.operation.requestBody;
+            
+            // Handle reference
+            if (requestBodyObj && typeof requestBodyObj === 'object' && '$ref' in requestBodyObj && requestBodyObj.$ref && openApiSpec.value) {
+                const refValue = openApiStore.resolveReference<OpenAPIV3.RequestBodyObject>(requestBodyObj.$ref, openApiSpec.value);
+                if (refValue && typeof refValue === 'object') {
+                    requestBodyObj = refValue;
+                }
+            }
+            
+            if (requestBodyObj && typeof requestBodyObj === 'object' && 'content' in requestBodyObj && requestBodyObj.content) {
+                const jsonContent = requestBodyObj.content['application/json'];
+                if (jsonContent?.schema && openApiSpec.value) {
+                    // Generate example from schema
+                    const example = openApiStore.generateExampleFromSchema(jsonContent.schema, openApiSpec.value);
+                    requestBody.value = JSON.stringify(example || {}, null, 2);
+                } else {
+                    requestBody.value = JSON.stringify({}, null, 2);
+                }
             }
         }
-        
-        if (requestBodyObj && typeof requestBodyObj === 'object' && 'content' in requestBodyObj && requestBodyObj.content) {
-            const jsonContent = requestBodyObj.content['application/json'];
-            if (jsonContent?.schema && openApiSpec.value) {
-                // Generate example from schema
-                const example = openApiStore.generateExampleFromSchema(jsonContent.schema, openApiSpec.value);
-                requestBody.value = JSON.stringify(example || {}, null, 2);
-            } else {
-                requestBody.value = JSON.stringify({}, null, 2);
-            }
-        }
+    } else if (!hasRestoredState) {
+        // Clear request body if no endpoint request body and no restored state
+        requestBody.value = '';
     }
 };
 
@@ -1293,8 +1357,12 @@ const clearCurrentEndpointHistory = () => {
                         <div v-for="item in filteredRequestHistory" :key="item.id" class="history-item">
                             <div class="history-item-header">
                                 <div class="history-item-title">
-                                    <span class="method-badge small" :style="{ backgroundColor: getMethodColor(item.method) }">
-                                        {{ item.method }}
+                                    <span class="status-code" :class="{
+                                        success: item.status && item.status >= 200 && item.status < 300,
+                                        error: item.status && item.status >= 400,
+                                        redirect: item.status && item.status >= 300 && item.status < 400
+                                    }">
+                                        {{ item.status || 'N/A' }}
                                     </span>
                                     <span class="history-url">{{ item.url }}</span>
                                 </div>
@@ -1310,15 +1378,6 @@ const clearCurrentEndpointHistory = () => {
                                     <span class="history-timestamp">
                                         {{ new Date(item.timestamp).toLocaleTimeString() }}
                                     </span>
-                                    <div v-if="item.status" class="history-status">
-                                        <span class="status-code" :class="{
-                                            success: item.status >= 200 && item.status < 300,
-                                            error: item.status >= 400,
-                                            redirect: item.status >= 300 && item.status < 400
-                                        }">
-                                            {{ item.status }} {{ item.statusText }}
-                                        </span>
-                                    </div>
                                 </div>
                             </div>
                             
@@ -3436,17 +3495,6 @@ const clearCurrentEndpointHistory = () => {
     }
 }
 
-.history-status {
-    flex-shrink: 0;
-    padding-left: 0.75rem;
-    border-left: 1px solid hsl(var(--border));
-
-    @media (max-width: 640px) {
-        padding-left: 0;
-        border-left: none;
-        width: 100%;
-    }
-}
 
 .history-curl-section {
     margin-bottom: 1rem;
