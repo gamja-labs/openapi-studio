@@ -80,11 +80,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { ChevronDown, X } from 'lucide-vue-next';
-import { useLocalStorage } from '@/composables/useLocalStorage';
 import { useConfigStore } from '@/stores/config';
-import type { ServiceHost } from '@/composables/useLocalStorage';
+import type { ServiceHost } from '@/utils/types';
 
-const localStorageStore = useLocalStorage();
 const config = useConfigStore();
 
 // State
@@ -96,8 +94,8 @@ const newServiceHostOpenApiPath = ref('');
 // Use service hosts from config
 const serviceHosts = computed(() => config.serviceHosts);
 
-// Get selected service host from config (already a computed property)
-const selectedServiceHost = computed(() => config.getSelectedServiceHost);
+// Get selected service host from config
+const selectedServiceHost = computed(() => config.selectedServiceHost);
 const selectedServiceHostId = computed(() => {
     return selectedServiceHost.value?.id || null;
 });
@@ -112,10 +110,8 @@ const handleSelectHost = async (id: string) => {
     const host = serviceHosts.value.find(h => h.id === id);
     if (!host) return;
     
-    localStorageStore.setSelectedServiceHostId(id);
-    
     // Use config to handle host selection (will reload OpenAPI spec)
-    await config.handleHostSelected(host);
+    await config.selectHost(id);
     
     // Close dropdown
     showDropdown.value = false;
@@ -130,14 +126,11 @@ const handleAddHost = async () => {
         openApiPath: newServiceHostOpenApiPath.value.trim() || undefined,
     };
     
-    localStorageStore.addServiceHost(newHost);
+    // Use config to handle host addition (will add to localStorage and reload)
+    await config.addHost(newHost);
     
-    // Use config to handle host addition
-    config.handleHostAdded();
-    
-    // Select the newly added host and reload
-    localStorageStore.setSelectedServiceHostId(newHost.id);
-    await config.handleHostSelected(newHost);
+    // Select the newly added host
+    await config.selectHost(newHost.id);
     
     // Clear form
     newServiceHostBaseUrl.value = '';
@@ -154,12 +147,9 @@ const handleCancelAdd = () => {
     newServiceHostOpenApiPath.value = '';
 };
 
-const handleRemoveHost = (id: string) => {
-    // Remove the host (this will also clear selection if it was selected)
-    localStorageStore.removeServiceHost(id);
-    
-    // Use config to handle host removal (will reload hosts and clear OpenAPI state if needed)
-    config.handleHostRemoved();
+const handleRemoveHost = async (id: string) => {
+    // Use config to handle host removal (will remove from localStorage and reload)
+    await config.removeHost(id);
 };
 
 // Close dropdown when clicking outside
@@ -180,10 +170,10 @@ watch(() => config.serviceHosts, () => {
 // Lifecycle
 onMounted(async () => {
     // Ensure service hosts are loaded
-    config.loadServiceHosts();
+    await config.loadConfigFromLocalStorage();
     
     // If there's a selected service host, ensure OpenAPI spec is loaded
-    const selectedHost = config.getSelectedServiceHost;
+    const selectedHost = config.selectedServiceHost;
     if (selectedHost) {
         await config.loadOpenApiSpec();
     }

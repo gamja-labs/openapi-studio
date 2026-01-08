@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useConfigStore } from '@/stores/config';
-import { useFeaturesToggle } from '@/composables/useFeaturesToggle';
 import ServiceHostPicker from '@/components/ServiceHostPicker.vue';
+import type { ServiceHost } from '@/utils/types';
 
 const config = useConfigStore();
-const features = useFeaturesToggle();
 
 // Service host management
 const serviceHostInput = ref<string>('');
@@ -17,12 +16,18 @@ const hasServiceHost = computed(() => config.hasServiceHost);
 const handleDirectConnect = async () => {
     if (!serviceHostInput.value.trim()) return;
     
-    // Use service host management from config
-    await config.handleDirectConnect(
-        serviceHostInput.value.trim(),
-        openApiPathInput.value.trim() || undefined
-    );
+    const newHost: ServiceHost = {
+        id: crypto.randomUUID(),
+        baseUrl: serviceHostInput.value.trim(),
+        openApiPath: openApiPathInput.value.trim() || undefined,
+    };
     
+    // Use config to handle host addition (will add to localStorage and reload)
+    await config.addHost(newHost);
+    
+    // Select the newly added host
+    await config.selectHost(newHost.id);
+
     // Clear inputs
     serviceHostInput.value = '';
     openApiPathInput.value = '';
@@ -30,7 +35,7 @@ const handleDirectConnect = async () => {
 </script>
 
 <template>
-    <div v-if="features.isServiceHostPickerEnabled && !hasServiceHost" class="service-host-input-section">
+    <div v-if="config.isServiceHostPickerEnabled && !hasServiceHost" class="service-host-input-section">
         <p v-if="serviceHosts.length > 0" class="welcome-description">
             Please select or add a service host to get started.
         </p>

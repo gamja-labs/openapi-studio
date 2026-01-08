@@ -1,8 +1,10 @@
+import type { ServiceHost } from '@/utils/types'
+
 const LOCAL_STORAGE_PREFIX = 'o-s-'
 
 // Storage keys
 const STORAGE_KEYS = {
-    CLERK_KEY: 'clerk-publishable-key',
+    CLERK_PUBLISHABLE_KEY: 'clerk-publishable-key',
     SERVICE_HOSTS: 'service-hosts',
     SELECTED_SERVICE_HOST_ID: 'selected-service-host-id',
     SIDEBAR_COLLAPSED: 'sidebar-collapsed',
@@ -16,15 +18,6 @@ type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
 function getStorageKey(key: string): string {
     return LOCAL_STORAGE_PREFIX + key
 }   
-
-// Service host type
-export type ServiceHost = {
-    id: string
-    baseUrl: string
-    openApiPath?: string
-    label?: string
-    clerkKey?: string
-}
 
 // Generic getter with JSON parsing
 function getItem<T>(key: StorageKey, defaultValue: T): T {
@@ -68,29 +61,29 @@ function removeItem(key: StorageKey): void {
  */
 export function useLocalStorage() {
     // Actions - Clerk Key
-    function saveClerkKey(key: string) {
+    function saveClerkPublishableKey(key: string) {
         if (key.trim()) {
-            setItem(STORAGE_KEYS.CLERK_KEY, key.trim())
+            setItem(STORAGE_KEYS.CLERK_PUBLISHABLE_KEY, key.trim())
         } else {
-            clearClerkKey()
+            clearClerkPublishableKey()
         }
     }
 
-    function clearClerkKey() {
-        removeItem(STORAGE_KEYS.CLERK_KEY)
+    function clearClerkPublishableKey() {
+        removeItem(STORAGE_KEYS.CLERK_PUBLISHABLE_KEY)
     }
 
-    function getClerkKey(): string {
-        return getItem<string>(STORAGE_KEYS.CLERK_KEY, '')
+    function getClerkPublishableKeyKey(): string {
+        return getItem<string>(STORAGE_KEYS.CLERK_PUBLISHABLE_KEY, '')
     }
 
-    function hasClerkKey(): boolean {
-        const key = getClerkKey()
+    function hasClerkPublishableKeyKey(): boolean {
+        const key = getClerkPublishableKeyKey()
         return !!(key && key.trim())
     }
 
-    function hasSavedClerkKey(): boolean {
-        return hasClerkKey()
+    function hasSavedClerkPublishableKeyKey(): boolean {
+        return hasClerkPublishableKeyKey()
     }
 
     // Actions - Service Hosts List
@@ -188,11 +181,11 @@ export function useLocalStorage() {
 
     return {
         // Clerk Key
-        saveClerkKey,
-        clearClerkKey,
-        getClerkKey,
-        hasClerkKey,
-        hasSavedClerkKey,
+        saveClerkPublishableKey,
+        clearClerkPublishableKey,
+        getClerkPublishableKey: getClerkPublishableKeyKey,
+        hasClerkPublishableKey: hasClerkPublishableKeyKey,
+        hasSavedClerkPublishableKey: hasSavedClerkPublishableKeyKey,
         // Service Hosts List
         getServiceHosts,
         saveServiceHosts,

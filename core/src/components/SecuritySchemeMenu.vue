@@ -2,21 +2,21 @@
 import { ref, computed, watch } from 'vue';
 import { X, Lock, Unlock } from 'lucide-vue-next';
 import type { OpenAPIV3 } from 'openapi-types';
-import { useClerkStore } from '@/stores/clerk';
 import { useOpenApiStore } from '@/stores/openapi';
 import { useEndpointStore } from '@/stores/endpoint';
 import { useConfigStore } from '@/stores/config';
+import { useConfigJson } from '@/composables/useConfigJson';
 
 const CLERK_BEARER_SCHEME = '__clerk_bearer__';
 
 // Get stores and composables
-const clerkStore = useClerkStore();
 const openApiStore = useOpenApiStore();
 const endpointStore = useEndpointStore();
 const config = useConfigStore();
+const configJson = useConfigJson();
 
 // Check if Clerk is available
-const clerkAvailable = computed(() => clerkStore.hasClerkKey);
+const clerkAvailable = computed(() => !!(config.clerkPublishableKey && config.clerkPublishableKey.trim()));
 
 // Get security schemes
 const securitySchemes = computed(() => openApiStore.securitySchemes);
@@ -39,30 +39,43 @@ const selectedSchemeName = computed(() => {
 });
 
 // Get selected service host's clerk key
-const selectedServiceHost = computed(() => config.getSelectedServiceHost);
+const selectedServiceHost = computed(() => config.selectedServiceHost);
 const clerkKey = ref('');
 
 // Watch selected service host to update clerk key
 watch(selectedServiceHost, (host) => {
-    clerkKey.value = host?.clerkKey || '';
+    clerkKey.value = host?.clerkPublishableKey || '';
 }, { immediate: true });
 
 // Clerk key related computed properties
 const hasSavedClerkKey = computed(() => {
-    return !!(selectedServiceHost.value?.clerkKey?.trim());
+    return !!(selectedServiceHost.value?.clerkPublishableKey?.trim());
 });
 const isClerkKeyReadOnly = computed(() => {
     // Check if key is from config.json or env (not editable)
-    return config.isClerkKeyFromConfig() || config.isClerkKeyFromEnv();
+    const source = clerkKeySource.value;
+    return source === 'config.json' || source === 'env';
 });
 const clerkKeySource = computed(() => {
-    if (config.isClerkKeyFromConfig()) {
-        return 'config.json';
-    } else if (config.isClerkKeyFromEnv()) {
-        return 'env';
-    } else if (selectedServiceHost.value?.clerkKey) {
+    const configKey = config.clerkPublishableKey;
+    const envKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+    const mergedConfig = config.config;
+    
+    // Check selected service host first
+    if (selectedServiceHost.value?.clerkPublishableKey) {
         return 'serviceHost';
     }
+    
+    // Check if key came from config.json (if it exists in json config and doesn't match env)
+    if (configKey && mergedConfig.clerkPublishableKey === configKey && configKey !== envKey) {
+        return 'config.json';
+    }
+    
+    // Check if key came from env
+    if (configKey && configKey === envKey) {
+        return 'env';
+    }
+    
     return null;
 });
 
@@ -70,7 +83,7 @@ const clerkKeySource = computed(() => {
 const clerkKeySourceMessage = computed(() => {
     const source = clerkKeySource.value;
     if (source === 'config.json') {
-        return `Key loaded from ${config.getConfigJsonPath()}`;
+        return `Key loaded from ${configJson.getConfigJsonPath()}`;
     } else if (source === 'env') {
         return 'Key loaded from environment variable';
     } else if (source === 'serviceHost') {
@@ -98,7 +111,7 @@ const selectSecurityScheme = (schemeName: string | null) => {
 const saveClerkKey = () => {
     if (!selectedServiceHost.value) return;
     // Save clerk key to the selected service host
-    config.saveClerkKeyForSelectedHost(clerkKey.value);
+    config.saveClerkPublishableKeyForSelectedHost(clerkKey.value);
     // Reload the page to apply the new Clerk key
     if (typeof window !== 'undefined') {
         window.location.reload();
@@ -108,7 +121,7 @@ const saveClerkKey = () => {
 const clearClerkKey = () => {
     if (!selectedServiceHost.value) return;
     // Clear clerk key from the selected service host
-    config.clearClerkKeyForSelectedHost();
+    config.clearClerkPublishableKeyForSelectedHost();
     // Reload the page
     if (typeof window !== 'undefined') {
         window.location.reload();

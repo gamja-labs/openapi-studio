@@ -6,7 +6,6 @@
     import { useOpenApiStore } from '@/stores/openapi';
     import { useEndpointStore, type RequestHistoryItem } from '@/stores/endpoint';
     import { useConfigStore } from '@/stores/config';
-    import { useClerkStore } from '@/stores/clerk';
     import { useAuth } from '@clerk/vue';
     
     interface Props {
@@ -22,10 +21,8 @@
     const openApiStore = useOpenApiStore();
     const endpointStore = useEndpointStore();
     const config = useConfigStore();
-    const clerkStore = useClerkStore();
-    
     // Clerk auth state
-    const clerkAvailable = clerkStore.hasClerkKey;
+    const clerkAvailable = !!(config.clerkPublishableKey && config.clerkPublishableKey.trim());
     let authState: ReturnType<typeof useAuth> | null = null;
     
     if (clerkAvailable) {
@@ -206,7 +203,7 @@
         };
     
         try {
-            const SERVICE_HOST = config.getServiceHostSync();
+            const SERVICE_HOST = config.serviceHost || '';
             let url = `${SERVICE_HOST}${props.path}`;
     
             const pathParams: Record<string, string> = {};

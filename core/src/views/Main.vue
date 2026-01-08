@@ -6,12 +6,10 @@ import { SignInButton, UserButton } from '@clerk/vue';
 import type { OpenAPIV3 } from 'openapi-types';
 import JsonEditorVue from 'vue3-ts-jsoneditor';
 import { Lock, ChevronRight, ChevronDown, ChevronLeft, Github, Rocket, FileText, Zap, BarChart, Unlock, RefreshCw } from 'lucide-vue-next';
-import { useClerkStore } from '@/stores/clerk';
 import { useOpenApiStore } from '@/stores/openapi';
 import { useEndpointStore } from '@/stores/endpoint';
 import { useLocalStorage } from '@/composables/useLocalStorage';
 import { useConfigStore } from '@/stores/config';
-import { useFeaturesToggle } from '@/composables/useFeaturesToggle';
 import ServiceHostPicker from '@/components/ServiceHostPicker.vue';
 import EndpointTester from '@/components/EndpointTester.vue';
 import SecuritySchemeMenu from '@/components/SecuritySchemeMenu.vue';
@@ -30,15 +28,11 @@ const router = useRouter();
 const route = useRoute();
 
 // Get stores
-const clerkStore = useClerkStore();
 const openApiStore = useOpenApiStore();
 const endpointStore = useEndpointStore();
 
-// Use feature toggle composable
-const features = useFeaturesToggle();
-
 // Only use Clerk if key exists
-let clerkAvailable = clerkStore.hasClerkKey;
+let clerkAvailable = !!(config.clerkPublishableKey && config.clerkPublishableKey.trim());
 let authState: ReturnType<typeof useAuth> | null = null;
 
 if (clerkAvailable) {
@@ -201,11 +195,8 @@ async function parseEndpointFromQuery(): Promise<{ path: string; method: string 
 }
 
 onMounted(async () => {
-    // Load Clerk publishable key from localStorage store
-    clerkStore.loadClerkKey();
-    
-    // Initialize config store (loads all settings from localStorage)
-    config.initialize();
+    // // Initialize config store (loads all settings from localStorage and config.json)
+    // await config.initialize();
     
     // Load sidebar collapsed states from localStorage
     sidebarCollapsed.value = localStorageStore.loadSidebarCollapsed();
@@ -396,8 +387,7 @@ const selectedSchemeName = computed(() => {
 
 // Refresh OpenAPI spec
 const refreshOpenApiSpec = async () => {
-    config.clearConfigCache();
-    await openApiStore.loadSpec();
+    await config.reload();
 };
 </script>
 
@@ -428,7 +418,7 @@ const refreshOpenApiSpec = async () => {
                 </div>
                 <div class="header-actions">
                     <ServiceHostPicker 
-                            v-if="features.isServiceHostPickerEnabled"
+                            v-if="config.isServiceHostPickerEnabled"
                             />
                     
                     <a 

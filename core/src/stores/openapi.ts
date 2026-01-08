@@ -13,7 +13,7 @@ export const useOpenApiStore = defineStore('openapi', () => {
 
     // Computed
     const openApiSpecUrl = computed(() => {
-        return config.getOpenApiSpecUrlSync()
+        return config.openApiSpecUrl || ''
     })
 
     const endpoints = computed(() => {
@@ -74,6 +74,8 @@ export const useOpenApiStore = defineStore('openapi', () => {
         loading.value = true
         error.value = null
 
+
+        console.log('loadSpec', url, openApiSpecUrl.value)
         try {
             const specUrl = url || openApiSpecUrl.value
             const response = await fetch(specUrl)

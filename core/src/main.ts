@@ -6,9 +6,7 @@ import { dark } from '@clerk/themes'
 
 import App from './App.vue'
 import { routes } from '@/router'
-import { useClerkStore } from '@/stores/clerk'
 import { useConfigStore } from '@/stores/config'
-import { useFeaturesToggle } from '@/composables/useFeaturesToggle'
 
 import '@fontsource-variable/open-sans';
 import '@fontsource-variable/chivo-mono';
@@ -30,18 +28,13 @@ export const createApp = ViteSSG(
         const pinia = createPinia()
         app.use(pinia)
         
-        // Initialize config store (loads all settings from localStorage)
+        // Initialize config store (loads all settings from localStorage and config.json)
         const configStore = useConfigStore()
-        configStore.initialize()
-        await configStore.loadConfig()
-
-        // Check feature toggles
-        const features = useFeaturesToggle()
+        await configStore.initialize()
         
         // Only initialize Clerk if not disabled and key is available
-        if (features.isClerkEnabled) {
-            const clerkStore = useClerkStore()
-            const publishableKey = clerkStore.getClerkKey
+        if (configStore.isClerkEnabled) {
+            const publishableKey = configStore.clerkPublishableKey
             
             if (publishableKey) {
                 app.use(clerkPlugin, {

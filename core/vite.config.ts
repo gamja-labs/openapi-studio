@@ -16,7 +16,7 @@ const config: UserConfig & { ssgOptions?: ViteSSGOptions } = {
         generateFile([
             {
                 type: 'json',
-                output: './build.json',
+                output: './openapi-studio-build.json',
                 data: {
                     "version": require('./package.json').version,
                     "build_id": process.env.VITE_BUILD_ID,
