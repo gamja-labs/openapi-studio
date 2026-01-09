@@ -12,6 +12,9 @@ export function useFeaturesToggle() {
         const enableSelection = import.meta.env.VITE_ENABLE_SERVICE_HOST_SELECTION
         if (enableSelection) return true;
 
+        const defaultServiceHostToWindowOrigin = import.meta.env.VITE_DEFAULT_SERVICE_HOST_TO_WINDOW_ORIGIN === 'true'
+        if (defaultServiceHostToWindowOrigin) return false;
+
         const serviceHost = import.meta.env.VITE_SERVICE_HOST
         if (serviceHost) return false;
         return true;

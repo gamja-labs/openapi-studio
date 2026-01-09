@@ -54,6 +54,12 @@ export interface OpenApiStudioOptions {
      * @default '/openapi-studio-config.json'
      */
     configJsonPath?: string;
+
+    /**
+     * Whether to use the window origin as the service host
+     * @default true
+     */
+    defaultServiceHostToWindowOrigin?: boolean;
 }
 
 /**
@@ -152,7 +158,8 @@ export class OpenApiStudioModule {
         httpAdapter.get(normalizedPath, (_req, res) => {
             res.type('application/json');
             const config = {
-                ...(options.serviceHost && { serviceHost: options.serviceHost }),
+                defaultServiceHostToWindowOrigin: options.defaultServiceHostToWindowOrigin ?? true,
+                serviceHost: options.serviceHost || '/',
                 ...(options.clerkPublishableKey && { clerkKey: options.clerkPublishableKey }),
                 ...(options.openApiSpecUrl && { openApiSpecUrl: options.openApiSpecUrl })
             };

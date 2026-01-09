@@ -39,6 +39,7 @@ export const useConfigStore = defineStore('config', () => {
             localStorage: Config,
         } = {
             env: {
+                defaultServiceHostToWindowOrigin: import.meta.env.VITE_DEFAULT_SERVICE_HOST_TO_WINDOW_ORIGIN === 'true',
                 serviceHost: import.meta.env.VITE_SERVICE_HOST,
                 clerkPublishableKey: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
                 openApiSpecUrl: import.meta.env.VITE_OPENAPI_SPEC_URL,
@@ -56,8 +57,14 @@ export const useConfigStore = defineStore('config', () => {
             ...configMap.json,
             ...configMap.localStorage,
         }
+        
+        // Normalize serviceHost to remove trailing slashes
+        if (merged.defaultServiceHostToWindowOrigin) {
+            merged.serviceHost = window.location.origin
+        } 
+        
         if (merged.serviceHost && !merged.openApiSpecUrl) {
-            merged.openApiSpecUrl = new URL('openapi.json', merged.serviceHost).href
+            merged.openApiSpecUrl = new URL('openapi.json', merged.serviceHost).href;
         }
 
         console.log('configMap', configMap)
@@ -196,7 +203,7 @@ export const useConfigStore = defineStore('config', () => {
         saveClerkPublishableKeyForSelectedHost('')
     }
 
-    const isServiceHostPickerEnabled = computed(() => featuresToggle.isServiceHostPickerEnabled)
+    const isServiceHostPickerEnabled = computed(() => featuresToggle.isServiceHostPickerEnabled && !mergedConfig.value.defaultServiceHostToWindowOrigin)
     const isClerkEnabled = computed(() => featuresToggle.isClerkEnabled)
     const isClerkPublishableKeyChangeEnabled = computed(() => featuresToggle.isClerkPublishableKeyChangeEnabled)
 

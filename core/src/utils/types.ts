@@ -1,4 +1,5 @@
 export interface Config {
+    defaultServiceHostToWindowOrigin?: boolean
     serviceHost?: string
     clerkPublishableKey?: string
     openApiSpecUrl?: string
