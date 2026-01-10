@@ -77,3 +77,29 @@ a {
     display: flex;
     flex-direction: column;
 }
+
+// Fancy scrollbars for Chrome/WebKit browsers
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 10px;
+    border: 2px solid hsl(var(--background));
+    transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+}
+
+::-webkit-scrollbar-corner {
+    background: hsl(var(--background));
+}

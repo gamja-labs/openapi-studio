@@ -9,6 +9,7 @@
   },
   "workspaces": [
     "core",
+    "desktop",
     "nestjs",
     "nestjs-test-project"
   ],

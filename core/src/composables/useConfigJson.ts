@@ -27,9 +27,15 @@ export function useConfigJson() {
     /**
      * Loads configuration from config.json (path configurable via VITE_CONFIG_JSON_PATH)
      * Returns null if config.json is not available or fails to load
+     * Can be disabled via VITE_DISABLE_CONFIG_JSON environment variable
      */
     const loadConfigJson = async () => {
         if (import.meta.env.SSR) {
+            return;
+        }
+        // Skip loading if disabled via environment variable
+        if (import.meta.env.VITE_DISABLE_CONFIG_JSON === 'true') {
+            console.log('Config JSON loading is disabled via VITE_DISABLE_CONFIG_JSON')
             return;
         }
         const configPath = getConfigJsonPath()

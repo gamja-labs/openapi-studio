@@ -24,6 +24,10 @@
     "@types/node": "^24.0.0",
     "typescript": "^5.9.3"
   },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0"
+  },
   "publishConfig": {
     "provenance": true
   }
