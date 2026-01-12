@@ -8,18 +8,15 @@
     import { useConfigStore } from '@/stores/config';
     import { useAuth } from '@clerk/vue';
     
-    interface Props {
-        path: string | null;
-        method: string | null;
-    }
-    
-    const props = defineProps<Props>();
-    
     const CLERK_BEARER_SCHEME = '__clerk_bearer__';
     
     // Stores and composables
     const openApiStore = useOpenApiStore();
     const endpointStore = useEndpointStore();
+    
+    // Get path and method from store
+    const path = computed(() => endpointStore.selectedPath);
+    const method = computed(() => endpointStore.selectedMethod);
     const config = useConfigStore();
     // Clerk auth state
     const clerkAvailable = !!(config.clerkPublishableKey && config.clerkPublishableKey.trim());
@@ -55,7 +52,8 @@
     });
     
     // State
-    const requestParams = ref<Record<string, any>>({});
+    const requestQuery = ref<Record<string, any>>({});
+    const requestUrlParams = ref<Record<string, any>>({});
     const requestBody = ref<string>('');
     const response = ref<any>(null);
     const responseError = ref<string | null>(null);
@@ -70,11 +68,14 @@
     
     // Computed
     const endpoint = computed(() => {
-        if (!props.path || !props.method) return null;
-        return openApiStore.getSelectedEndpoint(props.path, props.method);
+        if (!path.value || !method.value) return null;
+        return openApiStore.getSelectedEndpoint(path.value, method.value);
     });
     
-    const endpoints = computed(() => openApiStore.endpoints);
+    const endpointSpec = computed(() => {
+        if (!path.value || !method.value) return null;
+        return openApiStore.endpoints.find(e => e.path === path.value && e.method === method.value);
+    });
     
     const pathParameters = computed(() => {
         if (!endpoint.value || !endpoint.value.parameters) return [];
@@ -176,7 +177,7 @@
     };
     
     const sendRequest = async () => {
-        if (!props.path || !props.method) return;
+        if (!path.value || !method.value) return;
     
         sendingRequest.value = true;
         response.value = null;
@@ -185,8 +186,8 @@
         const historyItem: RequestHistoryItem = {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
             timestamp: new Date(),
-            method: props.method,
-            path: props.path || '',
+            method: method.value,
+            path: path.value || '',
             url: '',
             requestBody: requestBody.value.trim() ? (() => {
                 try {
@@ -195,7 +196,8 @@
                     return requestBody.value;
                 }
             })() : null,
-            requestParams: { ...requestParams.value },
+            requestQuery: { ...requestQuery.value },
+            requestUrlParams: { ...requestUrlParams.value },
             headers: {},
             response: null,
             responseError: null,
@@ -204,36 +206,21 @@
     
         try {
             const SERVICE_HOST = config.serviceHost || '';
-            let url = `${SERVICE_HOST}${props.path}`;
+            let url = `${SERVICE_HOST}${path.value}`;
     
-            const pathParams: Record<string, string> = {};
-            const queryParams = new URLSearchParams();
-    
-            for (const [key, value] of Object.entries(requestParams.value)) {
+            // Apply path parameters
+            for (const [key, value] of Object.entries(requestUrlParams.value)) {
                 if (value !== '' && value != null) {
-                    const endpointItem = endpoints.value.find(e => e.path === props.path && e.method === props.method);
-                    let isPathParam = false;
-                    
-                    if (endpointItem?.operation.parameters) {
-                        for (const p of endpointItem.operation.parameters) {
-                            const resolved = openApiStore.resolveParameter(p);
-                            if (resolved && resolved.name === key) {
-                                isPathParam = resolved.in === 'path';
-                                break;
-                            }
-                        }
-                    }
-    
-                    if (isPathParam) {
-                        pathParams[key] = String(value);
-                    } else {
-                        queryParams.append(key, String(value));
-                    }
+                    url = url.replace(`{${key}}`, encodeURIComponent(String(value)));
                 }
             }
     
-            for (const [key, value] of Object.entries(pathParams)) {
-                url = url.replace(`{${key}}`, encodeURIComponent(value));
+            // Build query parameters
+            const queryParams = new URLSearchParams();
+            for (const [key, value] of Object.entries(requestQuery.value)) {
+                if (value !== '' && value != null) {
+                    queryParams.append(key, String(value));
+                }
             }
     
             const headers: Record<string, string> = {
@@ -303,11 +290,11 @@
             historyItem.headers = { ...headers };
     
             const options: RequestInit = {
-                method: props.method,
+                method: method.value,
                 headers,
             };
-    
-            if (['POST', 'PUT', 'PATCH'].includes(props.method) && requestBody.value.trim()) {
+
+            if (['POST', 'PUT', 'PATCH'].includes(method.value) && requestBody.value.trim()) {
                 try {
                     options.body = JSON.stringify(JSON.parse(requestBody.value));
                 } catch (e) {
@@ -392,28 +379,27 @@
     };
     
     const clearCurrentEndpointHistory = () => {
-        if (!props.path || !props.method) return;
-        endpointStore.clearEndpointHistory(props.path, props.method);
+        if (!path.value || !method.value) return;
+        endpointStore.clearEndpointHistory(path.value, method.value);
     };
     
     // Save form state before switching endpoints
     const saveCurrentFormState = () => {
-        if (!props.path || !props.method) return;
-        endpointStore.saveEndpointFormState(props.path, props.method, {
-            requestParams: { ...requestParams.value },
+        // console.log('Saving form state', path.value, method.value, requestQuery.value, requestUrlParams.value, requestBody.value, selectedAuthScheme.value);
+        if (!path.value || !method.value) return;
+        endpointStore.saveEndpointFormState(path.value, method.value, {
+            requestQuery: { ...requestQuery.value },
+            requestUrlParams: { ...requestUrlParams.value },
             requestBody: requestBody.value,
             selectedAuthScheme: selectedAuthScheme.value,
         });
     };
     
     // Initialize request params and body when endpoint changes
-    watch([() => props.path, () => props.method], ([newPath, newMethod], [oldPath, oldMethod]) => {
+    watch([path, method], ([newPath, newMethod], [oldPath, oldMethod]) => {
         if (newPath !== oldPath || newMethod !== oldMethod) {
-            // Save previous endpoint's form state
-            if (oldPath && oldMethod) {
-                saveCurrentFormState();
-            }
-    
+            // console.log('Endpoint changed', newPath, newMethod, oldPath, oldMethod);
+           
             // Clear response state
             response.value = null;
             responseError.value = null;
@@ -422,15 +408,18 @@
             // Try to restore saved form state
             const savedState = endpointStore.getEndpointFormState(newPath || '', newMethod || '');
             const hasRestoredState = !!savedState;
-    
+            // console.log('hasRestoredState', hasRestoredState, savedState);
+
             if (hasRestoredState && savedState) {
                 // Restore saved state
-                requestParams.value = { ...savedState.requestParams };
+                requestQuery.value = { ...savedState.requestQuery };
+                requestUrlParams.value = { ...savedState.requestUrlParams };
                 requestBody.value = savedState.requestBody;
                 endpointStore.setSelectedAuthScheme(savedState.selectedAuthScheme);
             } else {
                 // Reset state when no saved state
-                requestParams.value = {};
+                requestQuery.value = {};
+                requestUrlParams.value = {};
                 requestBody.value = '';
                 endpointStore.setSelectedAuthScheme(null);
             }
@@ -439,20 +428,27 @@
             if (endpoint.value?.parameters) {
                 for (const param of endpoint.value.parameters) {
                     const resolved = openApiStore.resolveParameter(param);
-                    if (resolved && (resolved.in === 'query' || resolved.in === 'path')) {
+                    if (resolved && resolved.in === 'query') {
                         // Only initialize if not already in restored state
-                        if (!hasRestoredState || !(resolved.name in requestParams.value)) {
-                            requestParams.value[resolved.name] = '';
+                        if (!hasRestoredState || !(resolved.name in requestQuery.value)) {
+                            requestQuery.value[resolved.name] = '';
+                        }
+                    } else if (resolved && resolved.in === 'path') {
+                        // Only initialize if not already in restored state
+                        if (!hasRestoredState || !(resolved.name in requestUrlParams.value)) {
+                            requestUrlParams.value[resolved.name] = '';
                         }
                     }
                 }
             } else if (!hasRestoredState) {
                 // Clear params if no endpoint params and no restored state
-                requestParams.value = {};
+                requestQuery.value = {};
+                requestUrlParams.value = {};
             }
     
             // Initialize request body (only if no restored state)
             if (!hasRestoredState && endpoint.value?.requestBody) {
+                // console.log('Initializing request body', endpoint.value.requestBody);
                 let requestBodyObj: OpenAPIV3.RequestBodyObject | OpenAPIV3.ReferenceObject | undefined = endpoint.value.requestBody;
                 
                 if (requestBodyObj && typeof requestBodyObj === 'object' && '$ref' in requestBodyObj && requestBodyObj.$ref && openApiStore.openApiSpec) {
@@ -479,8 +475,8 @@
     }, { immediate: true });
     
     // Auto-save form state when it changes
-    watch([requestParams, requestBody, selectedAuthScheme], () => {
-        if (props.path && props.method) {
+    watch([requestQuery, requestUrlParams, requestBody, selectedAuthScheme], () => {
+        if (path.value && method.value) {
             saveCurrentFormState();
         }
     }, { deep: true });
@@ -541,7 +537,7 @@
                             <span v-if="param.description" class="param-desc"> - {{ param.description }}</span>
                         </dt>
                         <dd>
-                            <input v-model="requestParams[param.name]" type="text"
+                            <input v-model="requestUrlParams[param.name]" type="text"
                                 :placeholder="param.schema && 'default' in param.schema ? String(param.schema.default) : ''" />
                         </dd>
                     </div>
@@ -559,7 +555,7 @@
                             <span v-if="param.description" class="param-desc"> - {{ param.description }}</span>
                         </dt>
                         <dd>
-                            <input v-model="requestParams[param.name]" type="text"
+                            <input v-model="requestQuery[param.name]" type="text"
                                 :placeholder="param.schema && 'default' in param.schema ? String(param.schema.default) : ''" />
                         </dd>
                     </div>

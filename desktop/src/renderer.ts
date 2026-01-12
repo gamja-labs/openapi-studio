@@ -2,6 +2,8 @@ import { createApp } from 'vue';
 import { routes } from '@openapi-studio/core/src/router';
 import { createRouter, createMemoryHistory } from 'vue-router';
 
+import '@openapi-studio/core/src/setup';
+
 console.log('starting...');
 export const router = createRouter({
     history: createMemoryHistory(),

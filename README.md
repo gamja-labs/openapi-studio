@@ -2,6 +2,8 @@
 
 A modern, interactive OpenAPI testing and exploration tool built with Vue 3, TypeScript, and Vite. OpenAPI Studio allows you to load, explore, and test any OpenAPI 3.0 specification with a beautiful, intuitive interface.
 
+![Screenshot](/screenshot.png)
+
 ## Features
 
 - 📋 **Endpoint Explorer** - Browse all endpoints organized by path and method
@@ -62,7 +64,7 @@ async function bootstrap() {
 bootstrap();
 ```
 
-### Step 4: Navigate to interface in browser
+### Step 3: Navigate to interface in browser
 
 After setup, navigate to the path you configured (e.g., `http://localhost:3000/api-docs`) to access the OpenAPI Studio interface.
 

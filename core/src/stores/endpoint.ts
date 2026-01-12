@@ -8,7 +8,8 @@ export type RequestHistoryItem = {
     path: string
     url: string
     requestBody: any
-    requestParams: Record<string, any>
+    requestQuery: Record<string, any>
+    requestUrlParams: Record<string, any>
     headers: Record<string, string>
     response: any
     responseError: string | null
@@ -18,7 +19,8 @@ export type RequestHistoryItem = {
 }
 
 export type EndpointFormState = {
-    requestParams: Record<string, any>
+    requestQuery: Record<string, any>
+    requestUrlParams: Record<string, any>
     requestBody: string
     selectedAuthScheme: string | null
 }
@@ -116,7 +118,9 @@ export const useEndpointStore = defineStore('endpoint', () => {
     ): EndpointFormState | null {
         const key = getEndpointKey(path, method)
         if (!key) return null
-        return endpointFormState.value.get(key) || null
+        const state = endpointFormState.value.get(key) || null
+        console.log('getEndpointFormState', key, state);
+        return state
     }
     
     function clearEndpointFormState(path: string, method: string) {

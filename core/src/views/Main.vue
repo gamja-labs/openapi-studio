@@ -525,10 +525,7 @@ const refreshOpenApiSpec = async () => {
             ></div>
 
             <div v-if="selectedEndpoint" class="endpoint-content">
-                <EndpointTester 
-                    :path="selectedPath"
-                    :method="selectedMethod"
-                />
+                <EndpointTester />
 
                 <div 
                     v-if="!examplesSidebarCollapsed"

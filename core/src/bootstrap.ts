@@ -4,11 +4,10 @@ import { dark } from '@clerk/themes';
 import { clerkPlugin } from '@clerk/vue';
 
 import JsonEditorVue from 'vue3-ts-jsoneditor';
-import './setup';
 
 export async function bootstrap(app: App<Element>) {
-    
     app.component('JsonEditorVue', JsonEditorVue);
+
     // Initialize config store (loads all settings from localStorage and config.json)
     const configStore = useConfigStore()
     await configStore.initialize()
