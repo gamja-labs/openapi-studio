@@ -421,15 +421,13 @@ const refreshOpenApiSpec = async () => {
                             v-if="config.isServiceHostPickerEnabled"
                             />
                     
-                    <a 
-                        :href="openApiStore.openApiSpecUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <button 
+                        @click="router.push('/spec')"
                         class="openapi-spec-link"
                         title="View OpenAPI Spec JSON"
                     >
                         <FileText :size="20" />
-                    </a>
+                    </button>
                     <a 
                         href="https://github.com/gamja-labs/openapi-studio"
                         target="_blank"
@@ -854,6 +852,9 @@ const refreshOpenApiSpec = async () => {
     transition: color 0.2s, opacity 0.2s;
     padding: 0.5rem;
     border-radius: calc(var(--radius) - 2px);
+    background: transparent;
+    border: none;
+    cursor: pointer;
 
     &:hover {
         color: hsl(var(--primary));

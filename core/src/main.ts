@@ -4,8 +4,6 @@ import { routes } from '@/router'
 import { bootstrap } from './bootstrap'
 import { createPinia } from 'pinia';
 
-import './setup';
-
 const BUILD_ID = import.meta.env.VITE_BUILD_ID
 
 if (!BUILD_ID) {

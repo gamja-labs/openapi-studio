@@ -7,6 +7,11 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/views/Main.vue'),
     },
     {
+        path: '/spec',
+        name: 'spec-viewer',
+        component: () => import('@/views/SpecViewer.vue'),
+    },
+    {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
         component: () => import('@/views/NotFound.vue'),

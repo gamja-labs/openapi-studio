@@ -28,6 +28,13 @@
     --ring: 0 0% 83.1%;
 
     --radius: 0.5rem;
+
+    // JsonEditorVue styles
+    .jse-theme-dark {
+        --jse-theme-color: #262626;
+        --jse-panel-background: #262626;
+        --jse-theme-color-highlight: #262626;
+    }
 }
 
 * {
