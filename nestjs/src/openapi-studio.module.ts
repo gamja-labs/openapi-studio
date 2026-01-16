@@ -160,7 +160,7 @@ export class OpenApiStudioModule {
             const config = {
                 defaultServiceHostToWindowOrigin: options.defaultServiceHostToWindowOrigin ?? true,
                 serviceHost: options.serviceHost || '/',
-                ...(options.clerkPublishableKey && { clerkKey: options.clerkPublishableKey }),
+                ...(options.clerkPublishableKey && { clerkPublishableKey: options.clerkPublishableKey }),
                 ...(options.openApiSpecUrl && { openApiSpecUrl: options.openApiSpecUrl })
             };
             res.send(JSON.stringify(config));

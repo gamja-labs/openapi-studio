@@ -45,12 +45,12 @@ export const useConfigStore = defineStore('config', () => {
                 openApiSpecUrl: import.meta.env.VITE_OPENAPI_SPEC_URL,
             },
             json: configJsonService.config.value ?? {},
-            localStorage: {
-                ...(selectedServiceHost.value ? { serviceHost: selectedServiceHost.value.baseUrl } : {}),
-                ...(selectedServiceHost.value ? { clerkPublishableKey: selectedServiceHost.value.clerkPublishableKey } : {}),
-                ...(selectedServiceHost.value ? { openApiSpecUrl: selectedServiceHost.value.openApiPath } : {}),
-            }
-        }
+            localStorage: selectedServiceHost.value ? {
+                ...(selectedServiceHost.value.baseUrl ? { serviceHost: selectedServiceHost.value.baseUrl } : {}),
+                ...(selectedServiceHost.value.clerkPublishableKey ? { clerkPublishableKey: selectedServiceHost.value.clerkPublishableKey } : {}),
+                ...(selectedServiceHost.value.openApiPath ? { openApiSpecUrl: selectedServiceHost.value.openApiPath } : {}),
+            } : {},
+        };
 
         const merged = {
             ...configMap.env,

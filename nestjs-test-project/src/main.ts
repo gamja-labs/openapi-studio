@@ -43,6 +43,7 @@ async function bootstrap() {
                 'https://www.apache.org/licenses/LICENSE-2.0.html',
             )
             .setVersion(pkg.version)
+            .addBearerAuth()
             .build()),
         { version: "3.0" });
 
