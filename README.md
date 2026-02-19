@@ -1,6 +1,6 @@
 # OpenAPI Studio
 
-A modern, interactive OpenAPI testing and exploration tool built with Vue 3, TypeScript, and Vite. OpenAPI Studio allows you to load, explore, and test any OpenAPI 3.0 specification with a beautiful, intuitive interface.
+A modern, interactive OpenAPI testing and exploration tool built with Vue, TypeScript, and Electron. OpenAPI Studio allows you to load, explore, and test any OpenAPI 3.0 specification with an intuitive interface.
 
 ![Screenshot](/screenshot.png)
 

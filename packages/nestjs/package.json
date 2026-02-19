@@ -9,7 +9,10 @@
     "url": "https://github.com/gamja-labs/openapi-studio"
   },
   "scripts": {
-    "build": "tsc -b -v"
+    "build": "tsc -b -v",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@openapi-studio/core": "workspace:*",
@@ -21,8 +24,10 @@
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/platform-fastify": "^11.0.0",
     "@nestjs/swagger": "^11.2.3",
+    "@nestjs/testing": "^11.0.0",
     "@types/node": "^24.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.0"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

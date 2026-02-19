@@ -183,6 +183,21 @@ export class OpenApiStudioModule {
     }
 
     /**
+     * Rewrites root-relative asset paths in HTML to use the given base path.
+     * Handles both HTML attributes (href, src) and inline CSS url() references.
+     * This allows the SPA to be served from any sub-path (e.g. /docs) while
+     * keeping the core build output unchanged (base: '/').
+     */
+    protected static rewriteAssetPaths(html: string, basePath: string): string {
+        if (basePath === '/') return html;
+        // Rewrite href="/..." and src="/..." (but not protocol-relative "//...")
+        let result = html.replace(/((?:href|src)=["'])\/(?!\/)/g, `$1${basePath}/`);
+        // Rewrite url(/...) in inline CSS (handles optional quotes around path)
+        result = result.replace(/url\((['"]?)\/(?!\/)/g, `url($1${basePath}/`);
+        return result;
+    }
+
+    /**
      * Serves the index.html file for SPA routing
      * This ensures that all routes under the finalPath serve the Vue app
      */
@@ -193,10 +208,13 @@ export class OpenApiStudioModule {
         const distPath = getCoreDistAbsoluteFSPath();
         const indexHtmlPath = path.join(distPath, 'index.html');
 
-        // Read index.html once
+        // Read index.html once and rewrite asset paths for the mount path
         let indexHtml: string | null = null;
         try {
-            indexHtml = fs.readFileSync(indexHtmlPath, 'utf-8');
+            indexHtml = OpenApiStudioModule.rewriteAssetPaths(
+                fs.readFileSync(indexHtmlPath, 'utf-8'),
+                finalPath
+            );
         } catch (err) {
             console.warn(`Could not read index.html from ${indexHtmlPath}`);
             return;
@@ -245,10 +263,13 @@ export class OpenApiStudioModule {
         const distPath = getCoreDistAbsoluteFSPath();
         const indexHtmlPath = path.join(distPath, 'index.html');
 
-        // Read index.html
+        // Read index.html and rewrite asset paths for the mount path
         let indexHtml: string | null = null;
         try {
-            indexHtml = fs.readFileSync(indexHtmlPath, 'utf-8');
+            indexHtml = OpenApiStudioModule.rewriteAssetPaths(
+                fs.readFileSync(indexHtmlPath, 'utf-8'),
+                finalPath
+            );
         } catch (err) {
             console.warn(`Could not read index.html from ${indexHtmlPath}`);
             return;
