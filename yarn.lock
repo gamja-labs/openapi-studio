@@ -3224,9 +3224,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openapi-studio/core@workspace:*, @openapi-studio/core@workspace:core":
+"@openapi-studio/core@workspace:*, @openapi-studio/core@workspace:packages/core":
   version: 0.0.0-use.local
-  resolution: "@openapi-studio/core@workspace:core"
+  resolution: "@openapi-studio/core@workspace:packages/core"
   dependencies:
     "@clerk/themes": "npm:^2.4.41"
     "@clerk/vue": "npm:^1.17.1"
@@ -3258,9 +3258,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@openapi-studio/nestjs@workspace:*, @openapi-studio/nestjs@workspace:nestjs":
+"@openapi-studio/nestjs@workspace:*, @openapi-studio/nestjs@workspace:packages/nestjs":
   version: 0.0.0-use.local
-  resolution: "@openapi-studio/nestjs@workspace:nestjs"
+  resolution: "@openapi-studio/nestjs@workspace:packages/nestjs"
   dependencies:
     "@nestjs/common": "npm:^11.0.0"
     "@nestjs/core": "npm:^11.0.0"
@@ -11054,9 +11054,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nestjs-test-project@workspace:nestjs-test-project":
+"nestjs-test-project@workspace:packages/nestjs-test-project":
   version: 0.0.0-use.local
-  resolution: "nestjs-test-project@workspace:nestjs-test-project"
+  resolution: "nestjs-test-project@workspace:packages/nestjs-test-project"
   dependencies:
     "@eslint/eslintrc": "npm:^3.2.0"
     "@eslint/js": "npm:^9.18.0"
@@ -11416,9 +11416,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openapi-studio-desktop@workspace:desktop":
+"openapi-studio-desktop@workspace:packages/desktop":
   version: 0.0.0-use.local
-  resolution: "openapi-studio-desktop@workspace:desktop"
+  resolution: "openapi-studio-desktop@workspace:packages/desktop"
   dependencies:
     "@electron-forge/cli": "npm:^7.10.2"
     "@electron-forge/maker-deb": "npm:^7.10.2"

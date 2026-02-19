@@ -1,10 +1,10 @@
 {
     "packages": [
         {
-            "path": "./core"
+            "path": "./packages/core"
         },
         {
-            "path": "./nestjs"
+            "path": "./packages/nestjs"
         }
     ]
 }
