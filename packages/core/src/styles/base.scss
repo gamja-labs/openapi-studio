@@ -1,80 +1,57 @@
-:root {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+@use 'fonts' as *;
+@use 'type' as *;
+@use 'colors';
+@use 'theme';
+@use 'spacing' as *;
+@use 'motion';
+@use 'mixins' as *;
 
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 9%;
-
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 0% 50%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-
-    --radius: 0.5rem;
-
-    // JsonEditorVue styles
-    .jse-theme-dark {
-        --jse-theme-color: #262626;
-        --jse-panel-background: #262626;
-        --jse-theme-color-highlight: #262626;
-    }
-}
-
-* {
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
 html,
 body {
     height: 100%;
-    margin: 0;
-    padding: 0;
     overflow: hidden;
 }
 
 body {
-    font-family: 'Open Sans Variable', sans-serif;
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background: var(--black);
+    color: var(--text-primary);
+    font-family: $font-body;
+    font-size: $body;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
-// Ensure all inputs and form elements use dark theme
 input,
 textarea,
 select,
 button {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    border-color: hsl(var(--border));
+    font-family: inherit;
+    background-color: transparent;
+    color: inherit;
+    border-color: var(--border);
 }
 
-// Links
+button {
+    cursor: pointer;
+    font-family: inherit;
+}
+
 a {
-    color: hsl(var(--primary));
+    color: var(--interactive);
     text-decoration: none;
 
     &:hover {
-        text-decoration: underline;
+        color: var(--text-display);
     }
 }
 
@@ -85,28 +62,47 @@ a {
     flex-direction: column;
 }
 
-// Fancy scrollbars for Chrome/WebKit browsers
+// Scrollbars — flat, monochrome
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: hsl(var(--background));
-    border-radius: 10px;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted));
-    border-radius: 10px;
-    border: 2px solid hsl(var(--background));
-    transition: background 0.2s ease;
+    background: var(--border-visible);
+    border: 2px solid transparent;
+    background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground));
+    background: var(--text-disabled);
+    background-clip: padding-box;
+    border: 2px solid transparent;
 }
 
 ::-webkit-scrollbar-corner {
-    background: hsl(var(--background));
+    background: transparent;
+}
+
+// JSON editor library overrides — adapt its dark theme to our palette
+.jse-theme-dark,
+:root {
+    --jse-theme-color: var(--surface);
+    --jse-theme-color-highlight: var(--surface-raised);
+    --jse-panel-background: var(--surface);
+    --jse-panel-color: var(--text-primary);
+    --jse-background-color: var(--surface);
+    --jse-text-color: var(--text-primary);
+    --jse-text-color-inverse: var(--black);
+    --jse-main-border: 1px solid var(--border);
+}
+
+// Selection
+::selection {
+    background: var(--text-display);
+    color: var(--black);
 }

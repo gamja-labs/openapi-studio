@@ -1,75 +1,73 @@
 <template>
-    <div class="service-host-dropdown-wrapper">
-        <div class="service-host-dropdown" @click.stop="showDropdown = !showDropdown">
-            <span v-if="selectedServiceHost" class="service-host-selected">
+    <div class="host-picker">
+        <button
+            class="host-trigger"
+            @click.stop="showDropdown = !showDropdown"
+            :class="{ open: showDropdown }"
+        >
+            <span v-if="selectedServiceHost" class="host-trigger-label">
                 {{ getServiceHostLabel(selectedServiceHost) }}
             </span>
-            <span v-else class="service-host-placeholder">Select service host</span>
-            <ChevronDown :size="16" class="service-host-chevron" />
-        </div>
-        <div v-if="showDropdown" class="service-host-dropdown-menu" @click.stop>
-            <div class="service-host-list">
-                <div v-if="serviceHosts.length === 0" class="service-host-empty-state">
-                    <p class="service-host-empty-text">No service hosts yet</p>
-                    <p class="service-host-empty-hint">Add one below to get started</p>
+            <span v-else class="host-trigger-placeholder">Select service host</span>
+            <ChevronDown :size="14" :stroke-width="1.5" class="host-trigger-chev" />
+        </button>
+        <div v-if="showDropdown" class="host-menu" @click.stop>
+            <div class="host-list">
+                <div v-if="serviceHosts.length === 0" class="host-empty">
+                    <p class="host-empty-title">No service hosts</p>
+                    <p class="host-empty-sub">Add one below to begin</p>
                 </div>
-                <div 
-                    v-for="host in serviceHosts" 
+                <button
+                    v-for="host in serviceHosts"
                     :key="host.id"
-                    class="service-host-item"
-                    :class="{ 'selected': selectedServiceHostId === host.id }"
+                    class="host-row"
+                    :class="{ active: selectedServiceHostId === host.id }"
                     @click="handleSelectHost(host.id)"
                 >
-                    <div class="service-host-item-content">
-                        <div class="service-host-item-label">{{ getServiceHostLabel(host) }}</div>
-                        <div class="service-host-item-url">{{ host.baseUrl }}</div>
+                    <div class="host-row-text">
+                        <div class="host-row-label">{{ getServiceHostLabel(host) }}</div>
+                        <div class="host-row-url">{{ host.baseUrl }}</div>
                     </div>
-                    <button 
-                        class="service-host-item-remove"
+                    <button
+                        class="host-row-remove"
                         @click.stop="handleRemoveHost(host.id)"
                         title="Remove"
                     >
-                        <X :size="14" />
+                        <X :size="12" :stroke-width="1.5" />
                     </button>
-                </div>
-            </div>
-            <div class="service-host-add-section">
-                <button 
-                    v-if="!showAddForm"
-                    class="service-host-add-btn"
-                    @click="showAddForm = true"
-                >
-                    + Add Service Host
                 </button>
-                <div v-else class="service-host-add-form">
-                    <input 
+            </div>
+            <div class="host-add">
+                <button
+                    v-if="!showAddForm"
+                    class="host-add-btn"
+                    @click="showAddForm = true"
+                >+ Add Service Host</button>
+                <div v-else class="host-add-form">
+                    <input
                         v-model="newServiceHostBaseUrl"
                         type="text"
-                        placeholder="Base URL (e.g., https://api.example.com)"
-                        class="service-host-add-input"
+                        placeholder="Base URL (e.g. https://api.example.com)"
+                        class="host-input"
                         @keyup.enter="handleAddHost"
                     />
-                    <input 
+                    <input
                         v-model="newServiceHostOpenApiPath"
                         type="text"
-                        placeholder="OpenAPI Path (optional, e.g., /openapi.json)"
-                        class="service-host-add-input"
+                        placeholder="OpenAPI Path (optional)"
+                        class="host-input"
                         @keyup.enter="handleAddHost"
                     />
-                    <div class="service-host-add-actions">
-                        <button 
-                            @click="handleAddHost"
-                            class="service-host-add-submit"
-                            :disabled="!newServiceHostBaseUrl.trim()"
-                        >
-                            Add
-                        </button>
-                        <button 
+                    <div class="host-add-actions">
+                        <button
                             @click="handleCancelAdd"
-                            class="service-host-add-cancel"
-                        >
-                            Cancel
-                        </button>
+                            class="host-cancel"
+                        >Cancel</button>
+                        <button
+                            @click="handleAddHost"
+                            class="host-submit"
+                            :disabled="!newServiceHostBaseUrl.trim()"
+                        >Add</button>
                     </div>
                 </div>
             </div>
@@ -85,22 +83,15 @@ import type { ServiceHost } from '@/utils/types';
 
 const config = useConfigStore();
 
-// State
 const showDropdown = ref(false);
 const showAddForm = ref(false);
 const newServiceHostBaseUrl = ref('');
 const newServiceHostOpenApiPath = ref('');
 
-// Use service hosts from config
 const serviceHosts = computed(() => config.serviceHosts);
-
-// Get selected service host from config
 const selectedServiceHost = computed(() => config.selectedServiceHost);
-const selectedServiceHostId = computed(() => {
-    return selectedServiceHost.value?.id || null;
-});
+const selectedServiceHostId = computed(() => selectedServiceHost.value?.id || null);
 
-// Methods
 const getServiceHostLabel = (host: ServiceHost): string => {
     if (host.label) return host.label;
     return host.baseUrl + (host.openApiPath ? ` (${host.openApiPath})` : '');
@@ -109,35 +100,25 @@ const getServiceHostLabel = (host: ServiceHost): string => {
 const handleSelectHost = async (id: string) => {
     const host = serviceHosts.value.find(h => h.id === id);
     if (!host) return;
-    
-    // Use config to handle host selection (will reload OpenAPI spec)
     await config.selectHost(id);
-    
-    // Close dropdown
     showDropdown.value = false;
 };
 
 const handleAddHost = async () => {
     if (!newServiceHostBaseUrl.value.trim()) return;
-    
+
     const newHost: ServiceHost = {
         id: crypto.randomUUID(),
         baseUrl: newServiceHostBaseUrl.value.trim(),
         openApiPath: newServiceHostOpenApiPath.value.trim() || undefined,
     };
-    
-    // Use config to handle host addition (will add to localStorage and reload)
+
     await config.addHost(newHost);
-    
-    // Select the newly added host
     await config.selectHost(newHost.id);
-    
-    // Clear form
+
     newServiceHostBaseUrl.value = '';
     newServiceHostOpenApiPath.value = '';
     showAddForm.value = false;
-    
-    // Close dropdown
     showDropdown.value = false;
 };
 
@@ -148,36 +129,25 @@ const handleCancelAdd = () => {
 };
 
 const handleRemoveHost = async (id: string) => {
-    // Use config to handle host removal (will remove from localStorage and reload)
     await config.removeHost(id);
 };
 
-// Close dropdown when clicking outside
 const handleClickOutside = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
-    const wrapper = target.closest('.service-host-dropdown-wrapper');
-    
+    const wrapper = target.closest('.host-picker');
     if (!wrapper) {
         showDropdown.value = false;
     }
 };
 
-// Watch for service host changes to update dropdown state
-watch(() => config.serviceHosts, () => {
-    // Service hosts updated, dropdown will reflect changes via computed
-}, { deep: true });
+watch(() => config.serviceHosts, () => {}, { deep: true });
 
-// Lifecycle
 onMounted(async () => {
-    // Ensure service hosts are loaded
     await config.loadConfigFromLocalStorage();
-    
-    // If there's a selected service host, ensure OpenAPI spec is loaded
     const selectedHost = config.selectedServiceHost;
     if (selectedHost) {
         await config.loadOpenApiSpec();
     }
-    
     document.addEventListener('click', handleClickOutside);
 });
 
@@ -187,231 +157,241 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="scss">
-.service-host-dropdown-wrapper {
+@use '@/styles/shared' as *;
+
+.host-picker {
     position: relative;
-    margin-left: auto;
 }
 
-.service-host-dropdown {
+.host-trigger {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.375rem 0.75rem;
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-size: 0.875rem;
-    min-width: 200px;
-    height: 2rem;
+    gap: $space-sm;
+    height: 32px;
+    padding: 0 $space-md;
+    border: 1px solid var(--border-visible);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: $font-data;
+    font-size: $caption;
+    min-width: 240px;
+    max-width: 320px;
     cursor: pointer;
-    transition: border-color 0.2s;
+    @include transition-micro;
 
-    &:hover {
-        border-color: hsl(var(--ring));
-    }
-
-    .service-host-selected {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .service-host-placeholder {
-        flex: 1;
-        color: hsl(var(--muted-foreground));
-    }
-
-    .service-host-chevron {
-        color: hsl(var(--muted-foreground));
-        transition: transform 0.2s;
-        flex-shrink: 0;
+    &:hover,
+    &.open {
+        border-color: var(--text-primary);
     }
 }
 
-.service-host-dropdown-menu {
+.host-trigger-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.host-trigger-placeholder {
+    @include type-label;
+    flex: 1;
+    color: var(--text-secondary);
+    text-align: left;
+}
+
+.host-trigger-chev {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.host-menu {
     position: absolute;
-    top: calc(100% + 0.25rem);
+    top: calc(100% + $space-xs);
     right: 0;
-    min-width: 300px;
-    max-width: 400px;
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    min-width: 320px;
+    max-width: 420px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-visible);
     z-index: 1000;
-    max-height: 400px;
+    max-height: 420px;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-.service-host-list {
-    padding: 0.5rem;
+.host-list {
+    padding: $space-sm 0;
     min-height: 2rem;
 }
 
-.service-host-empty-state {
-    padding: 1.5rem 0.5rem;
-    text-align: center;
-    color: hsl(var(--muted-foreground));
+.host-empty {
+    padding: $space-lg $space-md;
+    text-align: left;
 }
 
-.service-host-empty-text {
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin: 0 0 0.25rem 0;
-    color: hsl(var(--foreground));
+.host-empty-title {
+    @include type-body-sm;
+    color: var(--text-primary);
+    margin: 0 0 $space-2xs 0;
 }
 
-.service-host-empty-hint {
-    font-size: 0.75rem;
+.host-empty-sub {
+    @include type-caption;
+    color: var(--text-disabled);
     margin: 0;
-    color: hsl(var(--muted-foreground));
 }
 
-.service-host-item {
+.host-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    border-radius: calc(var(--radius) - 2px);
-    cursor: pointer;
-    transition: background-color 0.2s;
-
-    &:hover {
-        background: hsl(var(--muted) / 0.5);
-    }
-
-    &.selected {
-        background: hsl(var(--primary) / 0.1);
-    }
-
-    .service-host-item-content {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .service-host-item-label {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: hsl(var(--foreground));
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .service-host-item-url {
-        font-size: 0.75rem;
-        color: hsl(var(--muted-foreground));
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .service-host-item-remove {
-        padding: 0.25rem;
-        border: none;
-        background: transparent;
-        color: hsl(var(--muted-foreground));
-        cursor: pointer;
-        border-radius: calc(var(--radius) - 2px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-
-        &:hover {
-            background: hsl(var(--destructive) / 0.1);
-            color: hsl(var(--destructive));
-        }
-    }
-}
-
-.service-host-add-section {
-    border-top: 1px solid hsl(var(--border));
-    padding: 0.5rem;
-}
-
-.service-host-add-btn {
+    gap: $space-sm;
     width: 100%;
-    padding: 0.5rem;
-    border: 1px dashed hsl(var(--border));
-    border-radius: calc(var(--radius) - 2px);
+    padding: $space-sm $space-md;
+    border: none;
+    border-left: 2px solid transparent;
     background: transparent;
-    color: hsl(var(--foreground));
-    font-size: 0.875rem;
     cursor: pointer;
-    transition: all 0.2s;
+    text-align: left;
+    color: var(--text-primary);
+    @include transition-micro;
 
     &:hover {
-        border-color: hsl(var(--ring));
-        background: hsl(var(--muted) / 0.3);
+        background: var(--surface);
+    }
+
+    &.active {
+        background: var(--surface);
+        border-left-color: var(--text-display);
     }
 }
 
-.service-host-add-form {
+.host-row-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.host-row-label {
+    @include type-body-sm;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.host-row-url {
+    @include type-caption;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.host-row-remove {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-disabled);
+    cursor: pointer;
+    @include transition-micro(color);
+
+    &:hover {
+        color: var(--accent);
+    }
+}
+
+.host-add {
+    border-top: 1px solid var(--border);
+    padding: $space-md;
+}
+
+.host-add-btn {
+    @include type-label;
+    width: 100%;
+    padding: $space-sm $space-md;
+    border: 1px dashed var(--border-visible);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    @include transition-micro;
+
+    &:hover {
+        border-color: var(--text-primary);
+        color: var(--text-primary);
+    }
+}
+
+.host-add-form {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: $space-sm;
 }
 
-.service-host-add-input {
-    padding: 0.5rem;
-    border: 1px solid hsl(var(--border));
-    border-radius: calc(var(--radius) - 2px);
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-size: 0.875rem;
+.host-input {
+    font-family: $font-data;
+    font-size: $body-sm;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-visible);
+    padding: $space-xs 0;
     outline: none;
-    transition: border-color 0.2s;
-
-    &:focus {
-        border-color: hsl(var(--ring));
-    }
+    @include transition-micro(border-color);
 
     &::placeholder {
-        color: hsl(var(--muted-foreground));
+        color: var(--text-disabled);
+    }
+
+    &:focus {
+        border-color: var(--text-display);
     }
 }
 
-.service-host-add-actions {
+.host-add-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: $space-sm;
     justify-content: flex-end;
+    margin-top: $space-xs;
 }
 
-.service-host-add-submit,
-.service-host-add-cancel {
-    padding: 0.375rem 0.75rem;
-    border: 1px solid hsl(var(--border));
-    border-radius: calc(var(--radius) - 2px);
-    font-size: 0.875rem;
+.host-cancel,
+.host-submit {
+    @include type-label;
+    height: 32px;
+    padding: 0 $space-md;
+    border-radius: 999px;
     cursor: pointer;
-    transition: all 0.2s;
+    @include transition-micro;
 }
 
-.service-host-add-submit {
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    border-color: hsl(var(--primary));
+.host-cancel {
+    background: transparent;
+    border: 1px solid var(--border-visible);
+    color: var(--text-secondary);
+
+    &:hover {
+        color: var(--text-primary);
+        border-color: var(--text-primary);
+    }
+}
+
+.host-submit {
+    background: var(--text-display);
+    color: var(--black);
+    border: none;
 
     &:hover:not(:disabled) {
-        opacity: 0.9;
+        background: var(--text-primary);
     }
 
     &:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
-    }
-}
-
-.service-host-add-cancel {
-    background: transparent;
-    color: hsl(var(--foreground));
-
-    &:hover {
-        background: hsl(var(--muted) / 0.3);
     }
 }
 </style>

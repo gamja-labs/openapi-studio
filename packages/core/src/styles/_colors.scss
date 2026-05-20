@@ -1,0 +1,40 @@
+// Dark mode (default) — Apple HIG-inspired warm graphite
+$black: #1D1D1F;          // base background — Apple.com dark hero
+$surface: #232325;        // first elevation — slightly warmer
+$surface-raised: #2C2C2E; // toolbar / raised cards — systemGray6
+$border: #38383A;         // subtle separator — systemGray4 tinted
+$border-visible: #48484A; // visible border / selected — systemGray3
+$text-disabled: #6C6C70;  // tertiary label
+$text-secondary: #98989D; // secondary label
+$text-primary: #EBEBF0;   // primary label
+$text-display: #F5F5F7;   // display white — Apple off-white
+
+// Accent & status (constant across modes)
+$accent: #FF453A;             // Apple systemRed (dark)
+$accent-subtle: rgba(255, 69, 58, 0.15);
+$success: #30D158;            // Apple systemGreen (dark)
+$warning: #FFD60A;            // Apple systemYellow (dark)
+$error: #FF453A;
+$info: #98989D;
+$interactive: #0A84FF;        // Apple systemBlue (dark)
+
+// HTTP method colors — tuned to Apple system palette
+$method-get: #0A84FF;     // systemBlue
+$method-post: #30D158;    // systemGreen
+$method-put: #FF9F0A;     // systemOrange
+$method-patch: #64D2FF;   // systemTeal
+$method-delete: #FF453A;  // systemRed
+$method-options: #BF5AF2; // systemPurple
+$method-head: #98989D;
+
+// Light mode
+$light-black: #F5F5F5;
+$light-surface: #FFFFFF;
+$light-surface-raised: #F0F0F0;
+$light-border: #E8E8E8;
+$light-border-visible: #CCCCCC;
+$light-text-disabled: #999999;
+$light-text-secondary: #666666;
+$light-text-primary: #1A1A1A;
+$light-text-display: #000000;
+$light-interactive: #007AFF;

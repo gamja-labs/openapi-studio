@@ -1,0 +1,11 @@
+{
+    "version": "0.0.1",
+    "configurations": [
+        {
+            "name": "core",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": ["workspace", "@openapi-studio/core", "dev", "--port", "5180", "--strictPort"],
+            "port": 5180
+        }
+    ]
+}

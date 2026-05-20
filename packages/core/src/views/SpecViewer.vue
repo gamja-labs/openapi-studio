@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Download, ArrowLeft, FileText } from 'lucide-vue-next';
+import { Download, ArrowLeft } from 'lucide-vue-next';
 import { useOpenApiStore } from '@/stores/openapi';
 import { useConfigStore } from '@/stores/config';
+import { useTheme } from '@/composables/useTheme';
 
 const router = useRouter();
 const openApiStore = useOpenApiStore();
 const config = useConfigStore();
+const { theme } = useTheme();
 
 const openApiSpec = computed(() => openApiStore.openApiSpec);
 const loading = computed(() => openApiStore.loading);
@@ -16,10 +18,9 @@ const openApiTitle = computed(() => openApiStore.openApiTitle);
 const openApiVersion = computed(() => openApiStore.openApiVersion);
 const openApiSpecUrl = computed(() => openApiStore.openApiSpecUrl);
 
-// Download the spec as JSON file
 const downloadSpec = () => {
     if (!openApiSpec.value) return;
-    
+
     const jsonString = JSON.stringify(openApiSpec.value, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -32,7 +33,6 @@ const downloadSpec = () => {
     URL.revokeObjectURL(url);
 };
 
-// Load spec if not already loaded
 onMounted(async () => {
     if (!openApiSpec.value && !loading.value && !error.value) {
         await config.loadOpenApiSpec();
@@ -42,65 +42,54 @@ onMounted(async () => {
 
 <template>
     <div class="spec-viewer">
-        <header class="spec-viewer-header">
-            <div class="header-content">
-                <button 
-                    @click="router.push('/')" 
-                    class="back-button"
-                    title="Back to main view"
+        <header class="spec-head">
+            <div class="spec-head-left">
+                <button
+                    @click="router.push('/')"
+                    class="back-btn"
+                    title="Back"
                 >
-                    <ArrowLeft :size="20" />
+                    <ArrowLeft :size="16" :stroke-width="1.5" />
                 </button>
-                <div class="header-title-section">
-                    <FileText :size="24" />
-                    <div class="title-row">
+                <div class="spec-title-block">
+                    <p class="spec-eyebrow">OPENAPI / SPEC</p>
+                    <div class="spec-title-row">
                         <h1 class="spec-title">{{ openApiTitle }}</h1>
-                        <div v-if="openApiVersion" class="api-version">v{{ openApiVersion }}</div>
+                        <span v-if="openApiVersion" class="spec-version">v{{ openApiVersion }}</span>
                     </div>
                 </div>
-                <button 
-                    @click="downloadSpec" 
-                    class="download-button"
-                    :disabled="!openApiSpec || loading"
-                    title="Download OpenAPI Spec JSON"
-                >
-                    <Download :size="20" />
-                    <span>Download</span>
-                </button>
             </div>
+            <button
+                @click="downloadSpec"
+                class="download-btn"
+                :disabled="!openApiSpec || loading"
+                title="Download"
+            >
+                <Download :size="14" :stroke-width="1.5" />
+                <span>Download</span>
+            </button>
         </header>
 
-        <div v-if="openApiSpecUrl" class="url-display">
-            <span class="url-label">OpenAPI Spec URL:</span>
-            <a 
-                :href="openApiSpecUrl" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                class="url-link"
-            >
+        <div v-if="openApiSpecUrl" class="spec-url-bar">
+            <span class="spec-url-label">URL</span>
+            <a :href="openApiSpecUrl" target="_blank" rel="noopener noreferrer" class="spec-url-link">
                 {{ openApiSpecUrl }}
             </a>
         </div>
 
-        <main class="spec-viewer-content">
-            <div v-if="loading" class="loading-state">
-                <p>Loading OpenAPI specification...</p>
-            </div>
-            <div v-else-if="error" class="error-state">
-                <p>Error loading specification: {{ error }}</p>
-            </div>
-            <div v-else-if="!openApiSpec" class="empty-state">
-                <p>No OpenAPI specification available.</p>
-            </div>
-            <div v-else class="json-viewer-container">
-                <JsonEditorVue 
-                    :model-value="openApiSpec" 
+        <main class="spec-body">
+            <p v-if="loading" class="spec-status">[LOADING SPECIFICATION...]</p>
+            <p v-else-if="error" class="spec-status error">[ERROR] {{ error }}</p>
+            <p v-else-if="!openApiSpec" class="spec-status">No OpenAPI specification available.</p>
+            <div v-else class="spec-json">
+                <JsonEditorVue
+                    :model-value="openApiSpec"
                     mode="text"
                     :readOnly="true"
                     :mainMenuBar="true"
                     :navigationBar="true"
                     :statusBar="false"
-                    :darkTheme="true"
+                    :darkTheme="theme === 'dark'"
                 />
             </div>
         </main>
@@ -108,184 +97,169 @@ onMounted(async () => {
 </template>
 
 <style lang="scss" scoped>
+@use '@/styles/shared' as *;
+
 .spec-viewer {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background: var(--black);
+    color: var(--text-primary);
     overflow: hidden;
 }
 
-.spec-viewer-header {
-    border-bottom: 1px solid hsl(var(--border));
-    background: hsl(var(--card));
-    flex-shrink: 0;
-    z-index: 100;
+.spec-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $space-md $space-lg;
+    border-bottom: 1px solid var(--border);
+    gap: $space-md;
 }
 
-.url-display {
-    padding: 0.75rem 2rem;
-    background: hsl(var(--muted) / 0.3);
-    border-bottom: 1px solid hsl(var(--border));
+.spec-head-left {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-    font-size: 0.875rem;
+    gap: $space-md;
+    min-width: 0;
+    flex: 1;
 }
 
-.url-label {
-    font-weight: 500;
-    color: hsl(var(--muted-foreground));
-    white-space: nowrap;
-}
-
-.url-link {
-    color: hsl(var(--primary));
-    text-decoration: none;
-    font-family: 'Chivo Mono Variable', monospace;
-    word-break: break-all;
-    transition: opacity 0.2s;
-
-    &:hover {
-        opacity: 0.8;
-        text-decoration: underline;
-    }
-}
-
-.header-content {
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.back-button {
-    display: flex;
+.back-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     background: transparent;
-    border: 1px solid hsl(var(--border));
-    color: hsl(var(--foreground));
+    border: 1px solid var(--border-visible);
+    color: var(--text-secondary);
     cursor: pointer;
-    padding: 0.5rem;
-    border-radius: calc(var(--radius) - 2px);
-    transition: all 0.2s;
-    flex-shrink: 0;
+    border-radius: 999px;
+    @include transition-micro;
 
     &:hover {
-        background: hsl(var(--muted) / 0.3);
-        color: hsl(var(--primary));
+        color: var(--text-display);
+        border-color: var(--text-display);
     }
 }
 
-.header-title-section {
+.spec-title-block {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex: 1;
+    flex-direction: column;
+    gap: $space-2xs;
     min-width: 0;
-
-    svg {
-        flex-shrink: 0;
-        color: hsl(var(--muted-foreground));
-    }
 }
 
-.title-row {
+.spec-eyebrow {
+    @include type-label;
+    color: var(--text-disabled);
+    margin: 0;
+}
+
+.spec-title-row {
     display: flex;
     align-items: baseline;
-    gap: 0.75rem;
+    gap: $space-md;
     flex-wrap: wrap;
-    flex: 1;
-    min-width: 0;
 }
 
 .spec-title {
-    font-size: 1.25rem;
-    font-weight: 600;
+    @include type-heading;
+    color: var(--text-display);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.2;
 }
 
-.api-version {
-    font-size: 0.875rem;
-    color: hsl(var(--muted-foreground));
-    font-weight: 500;
-    white-space: nowrap;
+.spec-version {
+    @include type-label;
+    color: var(--text-secondary);
 }
 
-.download-button {
-    display: flex;
+.download-btn {
+    @include type-label;
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+    gap: $space-xs;
+    height: 32px;
+    padding: 0 $space-md;
+    background: var(--text-display);
+    color: var(--black);
     border: none;
-    border-radius: calc(var(--radius) - 2px);
+    border-radius: 999px;
     cursor: pointer;
-    font-weight: 500;
-    transition: opacity 0.2s;
-    flex-shrink: 0;
+    @include transition-micro;
 
     &:hover:not(:disabled) {
-        opacity: 0.9;
+        background: var(--text-primary);
     }
 
     &:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
     }
 }
 
-.spec-viewer-content {
+.spec-url-bar {
+    display: flex;
+    align-items: baseline;
+    gap: $space-md;
+    padding: $space-sm $space-lg;
+    border-bottom: 1px solid var(--border);
+}
+
+.spec-url-label {
+    @include type-label;
+    color: var(--text-disabled);
+}
+
+.spec-url-link {
+    font-family: $font-data;
+    font-size: $caption;
+    color: var(--interactive);
+    word-break: break-all;
+    @include transition-micro(color);
+
+    &:hover {
+        color: var(--text-display);
+    }
+}
+
+.spec-body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    padding: 1rem;
+    padding: $space-lg;
     min-height: 0;
 }
 
-.loading-state,
-.error-state,
-.empty-state {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    padding: 2rem;
+.spec-status {
+    @include type-label;
+    color: var(--text-disabled);
+    text-align: center;
+    padding: $space-2xl;
+    margin: 0;
 
-    p {
-        font-size: 1rem;
-        color: hsl(var(--muted-foreground));
+    &.error {
+        color: var(--accent);
     }
 }
 
-.error-state p {
-    color: hsl(var(--destructive));
-}
-
-.json-viewer-container {
+.spec-json {
     flex: 1;
     min-height: 0;
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    background: hsl(var(--input));
+    border: 1px solid var(--border);
+    background: var(--surface);
     display: flex;
     flex-direction: column;
 
     :deep(.jsoneditor) {
         border: none;
-        background: hsl(var(--input));
+        background: var(--surface);
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -293,13 +267,13 @@ onMounted(async () => {
     }
 
     :deep(.jsoneditor-menu) {
-        background: hsl(var(--muted));
-        border-bottom: 1px solid hsl(var(--border));
+        background: var(--surface-raised);
+        border-bottom: 1px solid var(--border);
         flex-shrink: 0;
     }
 
     :deep(.jsoneditor-outer) {
-        background: hsl(var(--input));
+        background: var(--surface);
         flex: 1;
         overflow: hidden;
         display: flex;
@@ -309,8 +283,8 @@ onMounted(async () => {
     }
 
     :deep(.ace_editor) {
-        background: hsl(var(--input)) !important;
-        color: hsl(var(--foreground)) !important;
+        background: var(--surface) !important;
+        color: var(--text-primary) !important;
         position: absolute !important;
         top: 0 !important;
         left: 0 !important;
@@ -326,7 +300,8 @@ onMounted(async () => {
     }
 
     :deep(.ace_gutter) {
-        background: hsl(var(--muted)) !important;
+        background: var(--surface-raised) !important;
+        color: var(--text-disabled) !important;
     }
 
     :deep(.ace_content) {

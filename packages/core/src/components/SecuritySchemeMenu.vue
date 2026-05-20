@@ -9,50 +9,32 @@ import { useConfigJson } from '@/composables/useConfigJson';
 
 const CLERK_BEARER_SCHEME = '__clerk_bearer__';
 
-// Get stores and composables
 const openApiStore = useOpenApiStore();
 const endpointStore = useEndpointStore();
 const config = useConfigStore();
 const configJson = useConfigJson();
 
-// Check if Clerk is available
 const clerkAvailable = computed(() => !!(config.clerkPublishableKey && config.clerkPublishableKey.trim()));
 
-// Get security schemes
 const securitySchemes = computed(() => openApiStore.securitySchemes);
 
-// Get selected auth scheme
 const selectedAuthScheme = computed(() => endpointStore.selectedAuthScheme);
 
-// Get auth menu open state
 const authMenuOpen = computed(() => endpointStore.authMenuOpen);
 
-// Auth credentials state
 const authCredentials = ref<Record<string, any>>({});
 
-// Get selected security scheme display name
-const selectedSchemeName = computed(() => {
-    if (!selectedAuthScheme.value) return 'Anonymous';
-    if (selectedAuthScheme.value === CLERK_BEARER_SCHEME) return 'Clerk Bearer';
-    const scheme = securitySchemes.value.find(s => s.name === selectedAuthScheme.value);
-    return scheme ? scheme.name : 'Anonymous';
-});
-
-// Get selected service host's clerk key
 const selectedServiceHost = computed(() => config.selectedServiceHost);
 const clerkKey = ref('');
 
-// Watch selected service host to update clerk key
 watch(selectedServiceHost, (host) => {
     clerkKey.value = host?.clerkPublishableKey || '';
 }, { immediate: true });
 
-// Clerk key related computed properties
 const hasSavedClerkKey = computed(() => {
     return !!(selectedServiceHost.value?.clerkPublishableKey?.trim());
 });
 const isClerkKeyReadOnly = computed(() => {
-    // Check if key is from config.json or env (not editable)
     const source = clerkKeySource.value;
     return source === 'config.json' || source === 'env';
 });
@@ -60,26 +42,22 @@ const clerkKeySource = computed(() => {
     const configKey = config.clerkPublishableKey;
     const envKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
     const mergedConfig = config.config;
-    
-    // Check selected service host first
+
     if (selectedServiceHost.value?.clerkPublishableKey) {
         return 'serviceHost';
     }
-    
-    // Check if key came from config.json (if it exists in json config and doesn't match env)
+
     if (configKey && mergedConfig.clerkPublishableKey === configKey && configKey !== envKey) {
         return 'config.json';
     }
-    
-    // Check if key came from env
+
     if (configKey && configKey === envKey) {
         return 'env';
     }
-    
+
     return null;
 });
 
-// Get message for clerk key source
 const clerkKeySourceMessage = computed(() => {
     const source = clerkKeySource.value;
     if (source === 'config.json') {
@@ -92,7 +70,6 @@ const clerkKeySourceMessage = computed(() => {
     return null;
 });
 
-// Methods
 const updateAuthCredential = (schemeName: string, field: string, value: any) => {
     if (!authCredentials.value[schemeName]) {
         authCredentials.value[schemeName] = {};
@@ -110,9 +87,7 @@ const selectSecurityScheme = (schemeName: string | null) => {
 
 const saveClerkKey = () => {
     if (!selectedServiceHost.value) return;
-    // Save clerk key to the selected service host
     config.saveClerkPublishableKeyForSelectedHost(clerkKey.value);
-    // Reload the page to apply the new Clerk key
     if (typeof window !== 'undefined') {
         window.location.reload();
     }
@@ -120,9 +95,7 @@ const saveClerkKey = () => {
 
 const clearClerkKey = () => {
     if (!selectedServiceHost.value) return;
-    // Clear clerk key from the selected service host
     config.clearClerkPublishableKeyForSelectedHost();
-    // Reload the page
     if (typeof window !== 'undefined') {
         window.location.reload();
     }
@@ -132,82 +105,73 @@ const closeMenu = () => {
     endpointStore.closeAuthMenu();
 };
 
-// Expose authCredentials for parent component access if needed
 defineExpose({
     authCredentials,
 });
 </script>
 
 <template>
-    <aside v-if="authMenuOpen" class="auth-side-menu">
-        <div class="auth-menu-header">
-            <h2>Security Scheme</h2>
-            <button @click="closeMenu" class="close-auth-menu" title="Close">
-                <X :size="20" />
+    <aside v-if="authMenuOpen" class="auth-menu">
+        <header class="auth-menu-head">
+            <h2 class="auth-menu-title">Security Scheme</h2>
+            <button @click="closeMenu" class="auth-menu-close" title="Close">
+                <X :size="16" :stroke-width="1.5" />
             </button>
-        </div>
-        <div class="auth-menu-content">
-            <!-- Anonymous Option -->
-            <div 
-                class="auth-scheme anonymous-option"
-                :class="{ selected: selectedAuthScheme === null }"
+        </header>
+        <div class="auth-menu-body">
+            <div
+                class="auth-card"
+                :class="{ active: selectedAuthScheme === null }"
                 @click="selectSecurityScheme(null)"
             >
-                <div class="auth-scheme-header">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <Unlock :size="18" />
+                <div class="auth-card-head">
+                    <div class="auth-card-title">
+                        <Unlock :size="14" :stroke-width="1.5" />
                         <h3>Anonymous</h3>
                     </div>
-                    <span class="auth-scheme-type">NONE</span>
+                    <span class="auth-card-type">NONE</span>
                 </div>
-                <div class="auth-scheme-description">
-                    Make requests without authentication
-                </div>
+                <p class="auth-card-desc">Make requests without authentication.</p>
             </div>
 
-            <!-- Clerk Bearer Auth Option -->
-            <div 
+            <div
                 v-if="clerkAvailable"
-                class="auth-scheme clerk-bearer-option"
-                :class="{ selected: selectedAuthScheme === CLERK_BEARER_SCHEME }"
+                class="auth-card"
+                :class="{ active: selectedAuthScheme === CLERK_BEARER_SCHEME }"
                 @click="selectSecurityScheme(CLERK_BEARER_SCHEME)"
             >
-                <div class="auth-scheme-header">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <Lock :size="18" />
+                <div class="auth-card-head">
+                    <div class="auth-card-title">
+                        <Lock :size="14" :stroke-width="1.5" />
                         <h3>Clerk Bearer</h3>
                     </div>
-                    <span class="auth-scheme-type">CLERK</span>
+                    <span class="auth-card-type">CLERK</span>
                 </div>
-                <div class="auth-scheme-description">
-                    Use Clerk authentication token for bearer authentication
-                </div>
+                <p class="auth-card-desc">Use Clerk authentication token for bearer authentication.</p>
             </div>
 
-            <!-- Security Schema Cards -->
-            <div 
-                v-for="item in securitySchemes" 
-                :key="item.name" 
-                class="auth-scheme"
-                :class="{ selected: selectedAuthScheme === item.name }"
+            <div
+                v-for="item in securitySchemes"
+                :key="item.name"
+                class="auth-card"
+                :class="{ active: selectedAuthScheme === item.name }"
                 @click="selectSecurityScheme(item.name)"
             >
-                <div class="auth-scheme-header">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <Lock :size="18" />
+                <div class="auth-card-head">
+                    <div class="auth-card-title">
+                        <Lock :size="14" :stroke-width="1.5" />
                         <h3>{{ item.name }}</h3>
                     </div>
-                    <span class="auth-scheme-type">{{ item.scheme.type }}</span>
+                    <span class="auth-card-type">{{ item.scheme.type }}</span>
                 </div>
-                <div class="auth-scheme-description" v-if="item.scheme.description">
-                    {{ item.scheme.description }}
-                </div>
-                
-                <!-- API Key Scheme -->
-                <div v-if="item.scheme.type === 'apiKey'" class="auth-scheme-fields" @click.stop>
-                    <label>
-                        <span>{{ (item.scheme as OpenAPIV3.ApiKeySecurityScheme).name }}</span>
-                        <span class="field-location">({{ (item.scheme as OpenAPIV3.ApiKeySecurityScheme).in }})</span>
+                <p class="auth-card-desc" v-if="item.scheme.description">{{ item.scheme.description }}</p>
+
+                <div v-if="item.scheme.type === 'apiKey'" class="auth-fields" @click.stop>
+                    <label class="auth-field">
+                        <span class="auth-label">
+                            {{ (item.scheme as OpenAPIV3.ApiKeySecurityScheme).name }}
+                            <span class="auth-label-aux">({{ (item.scheme as OpenAPIV3.ApiKeySecurityScheme).in }})</span>
+                        </span>
                         <input
                             type="text"
                             :value="authCredentials[item.name]?.value || ''"
@@ -216,19 +180,12 @@ defineExpose({
                             class="auth-input"
                         />
                     </label>
-                    <button 
-                        v-if="authCredentials[item.name]?.value"
-                        @click="clearAuthCredential(item.name)"
-                        class="clear-credential-btn"
-                    >
-                        Clear
-                    </button>
+                    <button v-if="authCredentials[item.name]?.value" @click="clearAuthCredential(item.name)" class="ghost-btn">Clear</button>
                 </div>
 
-                <!-- HTTP Basic Auth -->
-                <div v-else-if="item.scheme.type === 'http' && (item.scheme as OpenAPIV3.HttpSecurityScheme).scheme === 'basic'" class="auth-scheme-fields" @click.stop>
-                    <label>
-                        <span>Username</span>
+                <div v-else-if="item.scheme.type === 'http' && (item.scheme as OpenAPIV3.HttpSecurityScheme).scheme === 'basic'" class="auth-fields" @click.stop>
+                    <label class="auth-field">
+                        <span class="auth-label">Username</span>
                         <input
                             type="text"
                             :value="authCredentials[item.name]?.username || ''"
@@ -237,8 +194,8 @@ defineExpose({
                             class="auth-input"
                         />
                     </label>
-                    <label>
-                        <span>Password</span>
+                    <label class="auth-field">
+                        <span class="auth-label">Password</span>
                         <input
                             type="text"
                             :value="authCredentials[item.name]?.password || ''"
@@ -247,19 +204,12 @@ defineExpose({
                             class="auth-input"
                         />
                     </label>
-                    <button 
-                        v-if="authCredentials[item.name]?.username || authCredentials[item.name]?.password"
-                        @click="clearAuthCredential(item.name)"
-                        class="clear-credential-btn"
-                    >
-                        Clear
-                    </button>
+                    <button v-if="authCredentials[item.name]?.username || authCredentials[item.name]?.password" @click="clearAuthCredential(item.name)" class="ghost-btn">Clear</button>
                 </div>
 
-                <!-- HTTP Bearer Auth -->
-                <div v-else-if="item.scheme.type === 'http' && (item.scheme as OpenAPIV3.HttpSecurityScheme).scheme === 'bearer'" class="auth-scheme-fields" @click.stop>
-                    <label>
-                        <span>Bearer Token</span>
+                <div v-else-if="item.scheme.type === 'http' && (item.scheme as OpenAPIV3.HttpSecurityScheme).scheme === 'bearer'" class="auth-fields" @click.stop>
+                    <label class="auth-field">
+                        <span class="auth-label">Bearer Token</span>
                         <input
                             type="text"
                             :value="authCredentials[item.name]?.token || ''"
@@ -268,19 +218,12 @@ defineExpose({
                             class="auth-input"
                         />
                     </label>
-                    <button 
-                        v-if="authCredentials[item.name]?.token"
-                        @click="clearAuthCredential(item.name)"
-                        class="clear-credential-btn"
-                    >
-                        Clear
-                    </button>
+                    <button v-if="authCredentials[item.name]?.token" @click="clearAuthCredential(item.name)" class="ghost-btn">Clear</button>
                 </div>
 
-                <!-- OAuth2 -->
-                <div v-else-if="item.scheme.type === 'oauth2'" class="auth-scheme-fields" @click.stop>
-                    <label>
-                        <span>Access Token</span>
+                <div v-else-if="item.scheme.type === 'oauth2'" class="auth-fields" @click.stop>
+                    <label class="auth-field">
+                        <span class="auth-label">Access Token</span>
                         <input
                             type="text"
                             :value="authCredentials[item.name]?.accessToken || ''"
@@ -289,19 +232,12 @@ defineExpose({
                             class="auth-input"
                         />
                     </label>
-                    <button 
-                        v-if="authCredentials[item.name]?.accessToken"
-                        @click="clearAuthCredential(item.name)"
-                        class="clear-credential-btn"
-                    >
-                        Clear
-                    </button>
+                    <button v-if="authCredentials[item.name]?.accessToken" @click="clearAuthCredential(item.name)" class="ghost-btn">Clear</button>
                 </div>
 
-                <!-- OpenID Connect -->
-                <div v-else-if="item.scheme.type === 'openIdConnect'" class="auth-scheme-fields" @click.stop>
-                    <label>
-                        <span>ID Token</span>
+                <div v-else-if="item.scheme.type === 'openIdConnect'" class="auth-fields" @click.stop>
+                    <label class="auth-field">
+                        <span class="auth-label">ID Token</span>
                         <input
                             type="text"
                             :value="authCredentials[item.name]?.idToken || ''"
@@ -310,372 +246,255 @@ defineExpose({
                             class="auth-input"
                         />
                     </label>
-                    <button 
-                        v-if="authCredentials[item.name]?.idToken"
-                        @click="clearAuthCredential(item.name)"
-                        class="clear-credential-btn"
-                    >
-                        Clear
-                    </button>
+                    <button v-if="authCredentials[item.name]?.idToken" @click="clearAuthCredential(item.name)" class="ghost-btn">Clear</button>
                 </div>
             </div>
 
-            <!-- Clerk Publishable Key Card -->
             <div v-if="selectedServiceHost" class="clerk-key-card">
-                <div class="clerk-key-header">
-                    <h3>Clerk Publishable Key</h3>
-                </div>
-                <div class="clerk-key-description">
-                    <span v-if="clerkKeySourceMessage">
-                        {{ clerkKeySourceMessage }}
-                    </span>
-                    <span v-else>
-                        Enter your Clerk publishable key to enable authentication. This will be stored with the selected service host.
-                    </span>
-                </div>
-                <div class="clerk-key-fields">
-                    <label>
-                        <span>Publishable Key</span>
-                            <input
-                                v-model="clerkKey"
-                                type="text"
-                                placeholder="pk_test_..."
-                                class="clerk-key-input"
-                                :disabled="hasSavedClerkKey || isClerkKeyReadOnly"
-                            />
-                    </label>
-                    <button 
-                        v-if="!hasSavedClerkKey && !isClerkKeyReadOnly" 
-                        @click="saveClerkKey" 
-                        class="save-button"
-                    >
-                        Save and reload
-                    </button>
-                    <button 
-                        v-else-if="hasSavedClerkKey && !isClerkKeyReadOnly" 
-                        @click="clearClerkKey" 
-                        class="save-button"
-                    >
-                        Clear and reload
-                    </button>
-                </div>
+                <h3 class="clerk-key-title">Clerk Publishable Key</h3>
+                <p class="clerk-key-desc">
+                    <span v-if="clerkKeySourceMessage">{{ clerkKeySourceMessage }}</span>
+                    <span v-else>Stored with the selected service host.</span>
+                </p>
+                <label class="auth-field">
+                    <span class="auth-label">Publishable Key</span>
+                    <input
+                        v-model="clerkKey"
+                        type="text"
+                        placeholder="pk_test_..."
+                        class="auth-input"
+                        :disabled="hasSavedClerkKey || isClerkKeyReadOnly"
+                    />
+                </label>
+                <button
+                    v-if="!hasSavedClerkKey && !isClerkKeyReadOnly"
+                    @click="saveClerkKey"
+                    class="primary-btn"
+                >Save & reload</button>
+                <button
+                    v-else-if="hasSavedClerkKey && !isClerkKeyReadOnly"
+                    @click="clearClerkKey"
+                    class="primary-btn"
+                >Clear & reload</button>
             </div>
         </div>
     </aside>
 </template>
 
 <style lang="scss" scoped>
-.auth-side-menu {
+@use '@/styles/shared' as *;
+
+.auth-menu {
     position: fixed;
     top: 0;
     right: 0;
-    width: 400px;
+    width: 420px;
     height: 100vh;
-    background: hsl(var(--card));
-    border-left: 1px solid hsl(var(--border));
+    background: var(--surface-raised);
+    border-left: 1px solid var(--border-visible);
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
 }
 
-.auth-menu-header {
+.auth-menu-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid hsl(var(--border));
-
-    h2 {
-        margin: 0;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: hsl(var(--foreground));
-    }
+    padding: $space-md $space-lg;
+    border-bottom: 1px solid var(--border);
 }
 
-.close-auth-menu {
-    background: none;
-    border: none;
-    color: hsl(var(--muted-foreground));
-    cursor: pointer;
-    padding: 0.25rem;
-    display: flex;
+.auth-menu-title {
+    @include type-label;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.auth-menu-close {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s;
-}
-
-.close-auth-menu:hover {
-    color: hsl(var(--foreground));
-}
-
-.auth-menu-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.auth-scheme {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    transition: all 0.2s;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
     cursor: pointer;
-    position: relative;
+    @include transition-micro(color);
 
     &:hover {
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-        border-color: hsl(var(--ring));
+        color: var(--text-display);
+    }
+}
+
+.auth-menu-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: $space-md $space-lg $space-lg;
+    display: flex;
+    flex-direction: column;
+    gap: $space-md;
+}
+
+.auth-card {
+    border: 1px solid var(--border);
+    padding: $space-md $space-md $space-md $space-md;
+    cursor: pointer;
+    position: relative;
+    border-left: 2px solid transparent;
+    @include transition-micro;
+
+    &:hover {
+        border-color: var(--border-visible);
     }
 
-    &.selected {
-        border-color: hsl(var(--primary));
-        background: hsla(var(--primary) / 0.1);
-        box-shadow: 0 0 0 2px hsla(var(--primary) / 0.2);
+    &.active {
+        border-color: var(--border-visible);
+        border-left-color: var(--text-display);
 
-        .auth-scheme-header {
-            border-bottom-color: hsla(var(--primary) / 0.3);
-            
-            h3 {
-                color: hsl(var(--primary));
-            }
-        }
-
-        .auth-scheme-type {
-            background: hsl(var(--primary));
-            color: hsl(var(--primary-foreground));
-            box-shadow: 0 0 0 1px hsla(var(--primary-foreground) / 0.2);
-        }
-        
-        .auth-scheme-description {
-            color: hsl(var(--muted-foreground));
-        }
-
-        &::before {
-            content: '';
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            width: 8px;
-            height: 8px;
-            background: hsl(var(--primary));
-            border-radius: 50%;
+        .auth-card-title h3 {
+            color: var(--text-display);
         }
     }
 }
 
-.auth-scheme-header {
+.auth-card-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid hsl(var(--border));
+    gap: $space-md;
+}
+
+.auth-card-title {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+    color: var(--text-secondary);
 
     h3 {
-        font-size: 1rem;
-        font-weight: 600;
+        @include type-body-sm;
+        font-weight: 500;
         margin: 0;
-        color: hsl(var(--foreground));
+        color: var(--text-primary);
+        @include transition-micro(color);
     }
 }
 
-.auth-scheme-type {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.625rem;
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    border-radius: calc(var(--radius) - 4px);
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.025em;
+.auth-card-type {
+    @include type-label;
+    color: var(--text-disabled);
 }
 
-.auth-scheme-description {
-    font-size: 0.875rem;
-    color: hsl(var(--muted-foreground));
-    margin-bottom: 1rem;
-    margin-top: 0.5rem;
-    line-height: 1.5;
+.auth-card-desc {
+    @include type-caption;
+    color: var(--text-secondary);
+    margin: $space-sm 0 0 0;
 }
 
-.auth-scheme-fields {
+.auth-fields {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-top: 0.5rem;
+    gap: $space-md;
+    margin-top: $space-md;
+    padding-top: $space-md;
+    border-top: 1px solid var(--border);
+}
 
-    label {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
+.auth-field {
+    display: flex;
+    flex-direction: column;
+    gap: $space-xs;
+}
 
-        span {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: hsl(var(--foreground));
-        }
+.auth-label {
+    @include type-label;
+    color: var(--text-secondary);
+}
 
-        .field-location {
-            font-size: 0.75rem;
-            color: hsl(var(--muted-foreground));
-            font-weight: normal;
-        }
-    }
+.auth-label-aux {
+    color: var(--text-disabled);
 }
 
 .auth-input {
-    padding: 0.5rem 0.75rem;
-    background: hsl(var(--input));
-    color: hsl(var(--foreground));
-    border: 1px solid hsl(var(--border));
-    border-radius: calc(var(--radius) - 2px);
-    font-size: 0.875rem;
-    transition: border-color 0.2s;
-
-    &:focus {
-        outline: none;
-        border-color: hsl(var(--ring));
-    }
+    font-family: $font-data;
+    font-size: $body-sm;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-visible);
+    padding: $space-xs 0;
+    outline: none;
+    @include transition-micro(border-color);
 
     &::placeholder {
-        color: hsl(var(--muted-foreground));
+        color: var(--text-disabled);
     }
-}
-
-.clear-credential-btn {
-    padding: 0.5rem 1rem;
-    background: hsl(var(--muted));
-    color: hsl(var(--foreground));
-    border: 1px solid hsl(var(--border));
-    border-radius: calc(var(--radius) - 2px);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s;
-    align-self: flex-start;
-    margin-top: 0.25rem;
-
-    &:hover {
-        background: hsl(var(--accent));
-        opacity: 0.9;
-    }
-}
-
-.save-button {
-    padding: 0.75rem 1.5rem;
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    border: none;
-    border-radius: calc(var(--radius) - 2px);
-    font-weight: 500;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    align-self: flex-start;
-    margin-top: 0.25rem;
-}
-
-.save-button:hover {
-    opacity: 0.9;
-}
-
-.clerk-key-card {
-    background: hsl(var(--muted));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    margin-top: auto;
-    border-top: 2px solid hsl(var(--border));
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    box-shadow: none;
-
-    &:hover {
-        box-shadow: none;
-        border-color: hsl(var(--border));
-    }
-}
-
-.clerk-key-header {
-    margin-bottom: 0.5rem;
-    
-    h3 {
-        font-size: 0.875rem;
-        font-weight: 600;
-        margin: 0;
-        color: hsl(var(--muted-foreground));
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-}
-
-.clerk-key-description {
-    font-size: 0.8125rem;
-    color: hsl(var(--muted-foreground));
-    margin-bottom: 1rem;
-    line-height: 1.4;
-}
-
-.clerk-key-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    
-    label {
-        display: flex;
-        flex-direction: column;
-        gap: 0.375rem;
-        
-        span {
-            font-size: 0.8125rem;
-            color: hsl(var(--muted-foreground));
-            font-weight: 500;
-        }
-    }
-}
-
-.clerk-key-input {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    background: hsl(var(--background));
-    border: 1px solid hsl(var(--border));
-    border-radius: calc(var(--radius) - 2px);
-    color: hsl(var(--foreground));
-    font-family: 'Chivo Mono Variable', monospace;
-    font-size: 0.8125rem;
-    transition: all 0.2s;
 
     &:focus:not(:disabled) {
-        outline: none;
-        border-color: hsl(var(--ring));
-        box-shadow: 0 0 0 2px hsla(var(--ring) / 0.2);
+        border-color: var(--text-display);
     }
 
     &:disabled {
-        background: hsl(var(--muted));
-        color: hsl(var(--muted-foreground));
+        color: var(--text-disabled);
         cursor: not-allowed;
-        opacity: 0.7;
-    }
-
-    &::placeholder {
-        color: hsl(var(--muted-foreground));
     }
 }
 
-.anonymous-option {
-    .auth-scheme-header {
-        h3 {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+.ghost-btn {
+    @include type-label;
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid var(--border-visible);
+    color: var(--text-secondary);
+    height: 28px;
+    padding: 0 $space-md;
+    border-radius: 999px;
+    cursor: pointer;
+    @include transition-micro;
+
+    &:hover {
+        color: var(--text-primary);
+        border-color: var(--text-primary);
     }
+}
+
+.primary-btn {
+    @include type-label;
+    align-self: flex-start;
+    height: 36px;
+    padding: 0 $space-lg;
+    background: var(--text-display);
+    color: var(--black);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    @include transition-micro;
+    margin-top: $space-md;
+
+    &:hover {
+        background: var(--text-primary);
+    }
+}
+
+.clerk-key-card {
+    margin-top: auto;
+    padding: $space-md 0 0 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: $space-sm;
+}
+
+.clerk-key-title {
+    @include type-label;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.clerk-key-desc {
+    @include type-caption;
+    color: var(--text-disabled);
+    margin: 0 0 $space-sm 0;
 }
 </style>

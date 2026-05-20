@@ -1,16 +1,13 @@
 <template>
-    <div class="not-found-container">
+    <div class="not-found">
         <div class="not-found-content">
-            <div class="error-code">404</div>
-            <h1 class="error-title">Page Not Found</h1>
-            <p class="error-description">
-                The page you're looking for doesn't exist or has been moved.
-            </p>
-            <div class="error-actions">
-                <button class="btn btn-primary" @click="goHome">
-                    Go to Home
-                </button>
-            </div>
+            <p class="not-found-eyebrow">ERROR / 404</p>
+            <h1 class="not-found-code">404</h1>
+            <p class="not-found-title">Page not found.</p>
+            <p class="not-found-desc">The page you requested does not exist or has been moved.</p>
+            <button class="not-found-btn" @click="goHome">
+                Return Home →
+            </button>
         </div>
     </div>
 </template>
@@ -26,70 +23,68 @@ const goHome = () => {
 </script>
 
 <style scoped lang="scss">
-.not-found-container {
+@use '@/styles/shared' as *;
+
+.not-found {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-    background-color: hsl(var(--background));
-    background-image: 
-        linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
-        linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
-    background-size: 50px 50px;
-    background-position: 0 0, 0 0;
+    padding: $space-xl;
+    background: var(--black);
+    @include dot-grid-subtle;
 }
 
 .not-found-content {
-    text-align: center;
-    max-width: 600px;
-}
-
-.error-code {
-    font-size: 8rem;
-    font-weight: 900;
-    line-height: 1;
-    color: hsl(var(--muted-foreground));
-    margin-bottom: 1rem;
-}
-
-.error-title {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    color: hsl(var(--foreground));
-}
-
-.error-description {
-    font-size: 1.125rem;
-    color: hsl(var(--muted-foreground));
-    margin-bottom: 2rem;
-}
-
-.error-actions {
+    max-width: 560px;
+    text-align: left;
     display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: $space-md;
 }
 
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
+.not-found-eyebrow {
+    @include type-label;
+    color: var(--text-disabled);
+    margin: 0;
+}
+
+.not-found-code {
+    font-family: $font-display;
+    font-size: 128px;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    color: var(--text-display);
+    margin: 0;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-
 }
 
-.btn-primary {
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+.not-found-title {
+    @include type-heading;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.not-found-desc {
+    @include type-body;
+    color: var(--text-secondary);
+    margin: 0 0 $space-lg 0;
+}
+
+.not-found-btn {
+    @include type-label;
+    align-self: flex-start;
+    height: 48px;
+    padding: 0 $space-xl;
+    background: var(--text-display);
+    color: var(--black);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    @include transition-micro;
 
     &:hover {
-        background-color: hsl(var(--primary) / 0.9);
+        background: var(--text-primary);
     }
 }
 </style>
-

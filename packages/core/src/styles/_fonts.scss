@@ -1,0 +1,9 @@
+// Doto — variable dot-matrix display font, Google Fonts only
+@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;500;700&display=swap');
+
+// Space Grotesk and Space Mono are loaded via fontsource packages
+// in setup.ts. Variables declared here for SCSS reference.
+
+$font-display: 'Doto', 'Space Mono', monospace;
+$font-body: 'Space Grotesk Variable', 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+$font-data: 'Space Mono', 'JetBrains Mono', 'SF Mono', monospace;

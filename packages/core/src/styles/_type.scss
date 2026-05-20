@@ -1,0 +1,83 @@
+@use 'fonts' as *;
+
+$display-xl: 72px;
+$display-lg: 48px;
+$display-md: 36px;
+$heading: 24px;
+$subheading: 18px;
+$body: 16px;
+$body-sm: 14px;
+$caption: 12px;
+$label: 11px;
+
+@mixin type-display-xl {
+    font-family: $font-display;
+    font-size: $display-xl;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+@mixin type-display-lg {
+    font-family: $font-display;
+    font-size: $display-lg;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+}
+
+@mixin type-display-md {
+    font-family: $font-body;
+    font-size: $display-md;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+}
+
+@mixin type-heading {
+    font-family: $font-body;
+    font-size: $heading;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    font-weight: 500;
+}
+
+@mixin type-subheading {
+    font-family: $font-body;
+    font-size: $subheading;
+    line-height: 1.3;
+    font-weight: 500;
+}
+
+@mixin type-body {
+    font-family: $font-body;
+    font-size: $body;
+    line-height: 1.5;
+}
+
+@mixin type-body-sm {
+    font-family: $font-body;
+    font-size: $body-sm;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+}
+
+@mixin type-caption {
+    font-family: $font-data;
+    font-size: $caption;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+}
+
+@mixin type-label {
+    font-family: $font-data;
+    font-size: $label;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+@mixin type-data {
+    font-family: $font-data;
+    font-size: $body-sm;
+    line-height: 1.4;
+    font-feature-settings: 'tnum';
+}

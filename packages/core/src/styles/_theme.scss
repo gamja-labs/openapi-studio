@@ -1,0 +1,54 @@
+@use 'colors' as *;
+
+:root,
+[data-theme='dark'] {
+    --black: #{$black};
+    --surface: #{$surface};
+    --surface-raised: #{$surface-raised};
+    --border: #{$border};
+    --border-visible: #{$border-visible};
+    --text-disabled: #{$text-disabled};
+    --text-secondary: #{$text-secondary};
+    --text-primary: #{$text-primary};
+    --text-display: #{$text-display};
+    --accent: #{$accent};
+    --accent-subtle: #{$accent-subtle};
+    --success: #{$success};
+    --warning: #{$warning};
+    --interactive: #{$interactive};
+    --method-get: #{$method-get};
+    --method-post: #{$method-post};
+    --method-put: #{$method-put};
+    --method-patch: #{$method-patch};
+    --method-delete: #{$method-delete};
+    --method-options: #{$method-options};
+    --method-head: #{$method-head};
+
+    color-scheme: dark;
+}
+
+[data-theme='light'] {
+    --black: #{$light-black};
+    --surface: #{$light-surface};
+    --surface-raised: #{$light-surface-raised};
+    --border: #{$light-border};
+    --border-visible: #{$light-border-visible};
+    --text-disabled: #{$light-text-disabled};
+    --text-secondary: #{$light-text-secondary};
+    --text-primary: #{$light-text-primary};
+    --text-display: #{$light-text-display};
+    --accent: #{$accent};
+    --accent-subtle: #{$accent-subtle};
+    --success: #{$success};
+    --warning: #{$warning};
+    --interactive: #{$light-interactive};
+    --method-get: #{$method-get};
+    --method-post: #{$method-post};
+    --method-put: #{$method-put};
+    --method-patch: #{$method-patch};
+    --method-delete: #{$method-delete};
+    --method-options: #{$method-options};
+    --method-head: #{$method-head};
+
+    color-scheme: light;
+}

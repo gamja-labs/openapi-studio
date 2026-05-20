@@ -1,0 +1,26 @@
+@use 'spacing' as *;
+
+@mixin dot-grid($dot-color: var(--border-visible), $size: 1px, $gap: 16px) {
+    background-image: radial-gradient(circle, $dot-color $size, transparent $size);
+    background-size: $gap $gap;
+}
+
+@mixin dot-grid-subtle {
+    @include dot-grid(var(--border), 0.5px, 12px);
+}
+
+// HTTP method color encoding — monochrome with single accent for destructive.
+// Hierarchy by opacity, not hue.
+@mixin method-color($method) {
+    @if $method == 'GET' {
+        color: var(--text-display);
+    } @else if $method == 'POST' {
+        color: var(--text-primary);
+    } @else if $method == 'PUT' or $method == 'PATCH' {
+        color: var(--text-secondary);
+    } @else if $method == 'DELETE' {
+        color: var(--accent);
+    } @else {
+        color: var(--text-secondary);
+    }
+}

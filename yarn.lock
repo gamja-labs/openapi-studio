@@ -1877,24 +1877,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fontsource-variable/chivo-mono@npm:^5.2.8":
-  version: 5.2.8
-  resolution: "@fontsource-variable/chivo-mono@npm:5.2.8"
-  checksum: 10c0/b83001ec6f5ca97e8857cd917151482b31ba8961e05ce3fdd676c2b2a29d1ecb8e0a14aa14e8102c74e9b4a7ac475e2a75ab5e6d4f32213070d8886ce23d432e
+"@fontsource-variable/space-grotesk@npm:^5.2.8":
+  version: 5.2.10
+  resolution: "@fontsource-variable/space-grotesk@npm:5.2.10"
+  checksum: 10c0/976123dc55a4c73d1986e0ca0c3f6210862cc48ebbec0fc4ba416f17195452e661e40504436ad4972692d34c530e1833cd5e9a0e377b4b9b062b781c6a4eeb74
   languageName: node
   linkType: hard
 
-"@fontsource-variable/inter@npm:^5.2.8":
-  version: 5.2.8
-  resolution: "@fontsource-variable/inter@npm:5.2.8"
-  checksum: 10c0/35b46df31c8c18f55f87228acf6297e4dac6cc9f38d0faaafdaf5a40e40c386cf1bfb115fb0fe0dcdb9b7e14f582843693ccf070d9c903072a5b2fc0f8dfde56
-  languageName: node
-  linkType: hard
-
-"@fontsource-variable/open-sans@npm:^5.2.7":
-  version: 5.2.7
-  resolution: "@fontsource-variable/open-sans@npm:5.2.7"
-  checksum: 10c0/9d847e3806d4fa2881e74a9e5704547aec6743075242de7f331b8954f1988c8cb6cdcc23b4f58919ac848e114185ceabdc46207a52c893a7a75aff992d7f8ccd
+"@fontsource/space-mono@npm:^5.2.8":
+  version: 5.2.9
+  resolution: "@fontsource/space-mono@npm:5.2.9"
+  checksum: 10c0/ca025887e613f35a5daa3863ccc467cb7c3661771963a6e1d5584bf1e9710bff97e1d42a148f6872b0c9b794ca9d24a9d413a0b33f4db4ef9a6c36bcf0da9b56
   languageName: node
   linkType: hard
 
@@ -3249,9 +3242,8 @@ __metadata:
   dependencies:
     "@clerk/themes": "npm:^2.4.41"
     "@clerk/vue": "npm:^1.17.1"
-    "@fontsource-variable/chivo-mono": "npm:^5.2.8"
-    "@fontsource-variable/inter": "npm:^5.2.8"
-    "@fontsource-variable/open-sans": "npm:^5.2.7"
+    "@fontsource-variable/space-grotesk": "npm:^5.2.8"
+    "@fontsource/space-mono": "npm:^5.2.8"
     "@tsconfig/node24": "npm:^24.0.3"
     "@types/node": "npm:^24.10.1"
     "@unhead/vue": "npm:^2.1.1"

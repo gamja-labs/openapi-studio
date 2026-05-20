@@ -1,0 +1,12 @@
+$duration-micro: 150ms;
+$duration-default: 200ms;
+$duration-transition: 350ms;
+$easing: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+@mixin transition-micro($property: all) {
+    transition: $property $duration-micro $easing;
+}
+
+@mixin transition-default($property: all) {
+    transition: $property $duration-default $easing;
+}
