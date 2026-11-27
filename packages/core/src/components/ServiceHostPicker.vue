@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import { ChevronDown, X } from 'lucide-vue-next';
+import { ChevronDown, X } from '@lucide/vue';
 import { useConfigStore } from '@/stores/config';
 import type { ServiceHost } from '@/utils/types';
 

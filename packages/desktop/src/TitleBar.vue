@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { Minus, Maximize2, Minimize2, X } from 'lucide-vue-next';
+import { Minus, Maximize2, Minimize2, X } from '@lucide/vue';
 
 const isElectron = ref(typeof window !== 'undefined' && window.electronAPI !== undefined);
 const isMaximized = ref(false);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { X, Lock, Unlock } from 'lucide-vue-next';
+import { X, Lock, Unlock } from '@lucide/vue';
 import type { OpenAPIV3 } from 'openapi-types';
 import { useOpenApiStore } from '@/stores/openapi';
 import { useEndpointStore } from '@/stores/endpoint';

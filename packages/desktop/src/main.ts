@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 
@@ -17,7 +17,7 @@ const createWindow = () => {
     backgroundColor: '#0a0a0a', // Match dark theme background
     webPreferences: {
     //   devTools: false, // This disables the DevTools
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
     },
   });
 

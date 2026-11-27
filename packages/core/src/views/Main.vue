@@ -10,7 +10,7 @@ import {
     ChevronRight,
     ChevronDown,
     ChevronLeft,
-    Github,
+    FolderGit2,
     FileText,
     Unlock,
     RefreshCw,
@@ -18,7 +18,7 @@ import {
     Moon,
     Search,
     X,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import { useOpenApiStore } from '@/stores/openapi';
 import { useEndpointStore } from '@/stores/endpoint';
 import { useLocalStorage } from '@/composables/useLocalStorage';
@@ -454,7 +454,7 @@ const refreshOpenApiSpec = async () => {
                     class="icon-btn"
                     title="View on GitHub"
                 >
-                    <Github :size="16" :stroke-width="1.5" />
+                    <FolderGit2 :size="16" :stroke-width="1.5" />
                 </a>
                 <button
                     @click="endpointStore.toggleAuthMenu"

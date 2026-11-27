@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import type { OpenAPIV3 } from 'openapi-types';
-import { Search } from 'lucide-vue-next';
+import { Search } from '@lucide/vue';
 
 type EndpointItem = {
     path: string;

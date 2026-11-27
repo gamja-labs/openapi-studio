@@ -2,7 +2,7 @@
 import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import type { OpenAPIV3 } from 'openapi-types';
 import JsonEditorVue from 'vue3-ts-jsoneditor';
-import { Lock, Unlock, ChevronDown, ChevronRight, Copy } from 'lucide-vue-next';
+import { Lock, Unlock, ChevronDown, ChevronRight, Copy } from '@lucide/vue';
 import { useOpenApiStore } from '@/stores/openapi';
 import { useEndpointStore, type RequestHistoryItem } from '@/stores/endpoint';
 import { useConfigStore } from '@/stores/config';

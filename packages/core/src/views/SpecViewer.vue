@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Download, ArrowLeft } from 'lucide-vue-next';
+import { Download, ArrowLeft } from '@lucide/vue';
 import { useOpenApiStore } from '@/stores/openapi';
 import { useConfigStore } from '@/stores/config';
 import { useTheme } from '@/composables/useTheme';
