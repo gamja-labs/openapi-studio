@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  publish:
+    name: Publish packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -22,5 +23,10 @@ jobs:
         env:
           VITE_BUILD_ID: ${{ github.sha }}
 
-      - run: cd ./core && yarn npm publish --provenance --access public
-      - run: cd ./nestjs && yarn npm publish --provenance --access public
+      - name: Publish @openapi-studio/core
+        working-directory: packages/core
+        run: yarn npm publish --provenance --access public
+
+      - name: Publish @openapi-studio/nestjs
+        working-directory: packages/nestjs
+        run: yarn npm publish --provenance --access public
